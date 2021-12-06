@@ -65,7 +65,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
                     // Add all other nodes to the list.
 
-                    if (_type.FullName == "System.Boolean" || _type.ToSystemType() == typeof(string))
+                    if (_type.ToSystemType() == typeof(bool) || _type.ToSystemType() == typeof(string))
                     {
                         var instructionNumber = _methodDefinition.Body.Instructions.Count - 4;
                         while (instructionNumber < _methodDefinition.Body.Instructions.Count)
