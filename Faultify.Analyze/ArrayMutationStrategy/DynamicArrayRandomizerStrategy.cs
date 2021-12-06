@@ -116,9 +116,6 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
 
             // append after array.
-            /*afterArray = new List<Instruction>();*/
-            
-
             foreach (var after in afterArray) processor.Append(after);
             _methodDefinition.Body.OptimizeMacros();
         }
