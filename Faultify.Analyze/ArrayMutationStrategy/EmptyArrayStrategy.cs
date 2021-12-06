@@ -16,13 +16,13 @@ namespace Faultify.Analyze.ArrayMutationStrategy
     /// </summary>
     public class EmptyArrayStrategy : IArrayMutationStrategy
     {
-        private readonly ArrayBuilder _arrayBuilder;
+        private readonly RandomizedArrayBuilder _arrayBuilder;
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
 
         public EmptyArrayStrategy(MethodDefinition methodDefinition)
         {
-            _arrayBuilder = new ArrayBuilder();
+            _arrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
         }
 
@@ -74,7 +74,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // append everything before array.
             foreach (var before in beforeArray) processor.Append(before);
 
-            var newArray = _arrayBuilder.CreateArray(processor, 0, _type);
+            var newArray = _arrayBuilder.CreateRandomizedArray(processor, 0, _type, new object[0]);
 
             // append new array
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
