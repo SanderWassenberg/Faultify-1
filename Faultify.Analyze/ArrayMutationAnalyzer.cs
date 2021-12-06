@@ -23,7 +23,6 @@ namespace Faultify.Analyze
             Mapped.Types.Add(typeof(char));
             Mapped.AddBooleanTypes();
             Mapped.AddIntegerTypes();
-            Mapped.WithStringTypes();
         }
 
         public TypeCollection Mapped { get; }
@@ -40,7 +39,7 @@ namespace Faultify.Analyze
         public IEnumerable<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
-             foreach (var instruction in method.Body.Instructions)
+            foreach (var instruction in method.Body.Instructions)
                 // Call the corresponding strategy based on the result
                 if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
                     yield return new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method);

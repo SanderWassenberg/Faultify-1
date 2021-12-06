@@ -32,23 +32,10 @@ namespace Faultify.Core.Extensions
             try
             {
                 return
-                    instruction.OpCode == OpCodes.Newarr;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        public static bool IsDynamicBoolArray(this Instruction instruction)
-        {
-            try
-            {
-                return
-                    instruction.OpCode == OpCodes.Newarr;
-                    /*&& instruction.Next.OpCode == OpCodes.Dup
-                    && instruction.Next.Next.OpCode == OpCodes.Ldc_I4_0
-                    && instruction.Next.Next.Next.OpCode == OpCodes.Ldc_I4_1;*/
+                    instruction.OpCode == OpCodes.Newarr
+                    && instruction.Next.OpCode == OpCodes.Dup
+                    && instruction.Next.Next.OpCode == OpCodes.Ldtoken
+                    && instruction.Next.Next.Next.OpCode == OpCodes.Call;
             }
             catch
             {
@@ -82,7 +69,7 @@ namespace Faultify.Core.Extensions
                 case TypeCode.Double: //double
                     return OpCodes.Ldc_R8;
                 case TypeCode.String: //string
-                    return OpCodes.Ldstr;
+                    return OpCodes.Ldloc_0;
                 default:
                     return OpCodes.Nop;
             }
