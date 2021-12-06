@@ -67,7 +67,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
                     if (_type.FullName == "System.Boolean" || _type.ToSystemType() == typeof(string))
                     {
-                        var instructionNumber = _methodDefinition.Body.Instructions.Count - 6;
+                        var instructionNumber = _methodDefinition.Body.Instructions.Count - 4;
                         while (instructionNumber < _methodDefinition.Body.Instructions.Count)
                         {
                             afterArray.Add(_methodDefinition.Body.Instructions[instructionNumber]);
@@ -90,7 +90,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             }
 
 
-            object[] data = new object[length];;
+            object[] data = new object[length];
             if(_type.ToSystemType() == typeof(bool))
             {
                 while (index < _methodDefinition.Body.Instructions.Count)

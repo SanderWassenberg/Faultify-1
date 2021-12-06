@@ -40,22 +40,6 @@ namespace Faultify.Core.Extensions
             }
         }
 
-        public static bool IsDynamicBoolArray(this Instruction instruction)
-        {
-            try
-            {
-                return
-                    instruction.OpCode == OpCodes.Newarr;
-                    /*&& instruction.Next.OpCode == OpCodes.Dup
-                    && instruction.Next.Next.OpCode == OpCodes.Ldc_I4_0
-                    && instruction.Next.Next.Next.OpCode == OpCodes.Ldc_I4_1;*/
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
         public static Type ToSystemType(this TypeReference typeRef)
         {
             return Type.GetType(typeRef.FullName);
