@@ -37,86 +37,77 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             _methodDefinition.Body.SimplifyMacros();
 
             var length = 0;
-            var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
-            
-            int index = 0;
 
-            // Find array to replace
-            foreach (var instruction in _methodDefinition.Body.Instructions)
+            var currentInstruction = _methodDefinition.Body.Instructions[0];
+
+            // Get the length and type of the array from the instructions
+            // After the 'Dup' instruction the setup ends and the actual values start
+            while (currentInstruction != null)
             {
-                // add all instruction before dynamic array to list.
-                if (!instruction.IsDynamicArray())
-                {
-                    beforeArray.Add(instruction);
-                }
+                if (currentInstruction.OpCode == OpCodes.Ldc_I4) length = (int)currentInstruction.Operand;
+                if(currentInstruction.OpCode == OpCodes.Newarr) _type = (TypeReference)currentInstruction.Operand;
+                if (currentInstruction.OpCode == OpCodes.Dup) break;
 
-                // if dynamic array add all instructions after the array initialisation.
-                else if (instruction.IsDynamicArray())
-                {
-                    beforeArray.Remove(instruction.Previous);
-                    // get type of array
-                    _type = (TypeReference)instruction.Operand;
-
-                    var previous = instruction.Previous;
-                    var call = instruction.Next.Next.Next;
-                    // get length of array.
-                    length = (int)previous.Operand;
-
-                    // Add all other nodes to the list.
-
-                    if (_type.ToSystemType() == typeof(bool) || _type.ToSystemType() == typeof(string))
-                    {
-                        var instructionNumber = _methodDefinition.Body.Instructions.Count - 4;
-                        while (instructionNumber < _methodDefinition.Body.Instructions.Count)
-                        {
-                            afterArray.Add(_methodDefinition.Body.Instructions[instructionNumber]);
-                            instructionNumber++;
-                        }
-                    }
-                    else
-                    {
-                        var next = call.Next;
-                        while (next != null)
-                        {
-                            afterArray.Add(next);
-                            next = next.Next;
-                        }
-                    }
-
-                    break;
-                }
-                index++;
+                currentInstruction = currentInstruction.Next;
             }
+            currentInstruction = currentInstruction?.Next;
 
-
+            // create a new object array with the length of the original array
             object[] data = new object[length];
-            if(_type.ToSystemType() == typeof(bool))
+
+            // Process the values of the array
+            // if the array is created using Ldtoken, get the values from there
+            if (currentInstruction?.OpCode == OpCodes.Ldtoken)
             {
-                while (index < _methodDefinition.Body.Instructions.Count)
+                var initialValues = ((FieldDefinition)currentInstruction.Operand).InitialValue;
+
+                for (var index = 0; index < length; index++)
                 {
-                    if(_methodDefinition.Body.Instructions[index].OpCode.Name == OpCodes.Ldc_I4.ToString())
+                    data[index] = initialValues[index];
+                }
+
+                // skip the array initialization
+                currentInstruction = currentInstruction.Next.Next;
+            }
+            // if the array is created by adding each item by index, go over all these instructions
+            else
+            {
+                while (currentInstruction != null)
+                {
+                    // when you reach an Stloc, all values have been set
+                    if (currentInstruction.OpCode == OpCodes.Stloc) break;
+
+                    // the first Ldc_i4 instruction sets the index, the following commands sets the value
+                    if (currentInstruction.OpCode == OpCodes.Ldc_I4)
                     {
-                        data[(int)_methodDefinition.Body.Instructions[index].Operand] = true;
-                        index++;
+                        data[(int) currentInstruction.Operand] = currentInstruction.Next.Operand;
+                        currentInstruction = currentInstruction.Next;
                     }
-                    index++;
+
+                    currentInstruction = currentInstruction.Next;
                 }
             }
-            
 
+            // add the instructions to be run after the values have been set
+            while (currentInstruction != null)
+            {
+                afterArray.Add(currentInstruction);
+                currentInstruction = currentInstruction.Next;
+            }
+
+            // remove all the instructions
             processor.Clear();
-
-            // append everything before array.
-            foreach (var before in beforeArray) processor.Append(before);
-
+            
+            // get the instructions to create the array with all its values
             var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data);
 
-            // append new array
+            // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
 
-            // append after array.
+            // append after array instructions to processor
             foreach (var after in afterArray) processor.Append(after);
+
             _methodDefinition.Body.OptimizeMacros();
         }
     }

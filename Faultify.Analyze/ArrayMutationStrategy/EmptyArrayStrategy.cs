@@ -41,45 +41,53 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
 
-            foreach (var instruction in _methodDefinition.Body.Instructions)
+            var currentInstruction = _methodDefinition.Body.Instructions[0];
+
+            // Get the type of the array from the instructions
+            // After the 'Dup' instruction the setup ends and the actual values start
+            while (currentInstruction != null)
             {
-                if (!instruction.IsDynamicArray())
+                if (currentInstruction.OpCode == OpCodes.Newarr) _type = (TypeReference)currentInstruction.Operand;
+                if (currentInstruction.OpCode == OpCodes.Dup) break;
+
+                currentInstruction = currentInstruction.Next;
+            }
+            currentInstruction = currentInstruction?.Next;
+
+            // Process the values of the array. we want to skip all of them since the new array will be empty
+            // if the array is created using Ldtoken, get the values from there
+            if (currentInstruction?.OpCode == OpCodes.Ldtoken)
+            {
+                // skip the array initialization
+                currentInstruction = currentInstruction.Next.Next;
+            }
+            // if the array is created by adding each item by index, go over all these instructions
+            else
+            {
+                // when you reach an Stloc, all values have been visited
+                while (currentInstruction != null && currentInstruction.OpCode != OpCodes.Stloc)
                 {
-                    beforeArray.Add(instruction);
-                }
-
-                // if dynamic array add all instructions after the array initialisation.
-                else if (instruction.IsDynamicArray())
-                {
-                    beforeArray.Remove(instruction.Previous);
-                    // get type of array
-                    _type = (TypeReference)instruction.Operand;
-
-                    var call = instruction.Next.Next.Next;
-
-                    // Add all other nodes to the list.
-                    var next = call.Next;
-                    while (next != null)
-                    {
-                        afterArray.Add(next);
-                        next = next.Next;
-                    }
-
-                    break;
+                    currentInstruction = currentInstruction.Next;
                 }
             }
 
+            // add the instructions to be run after the values have been set
+            while (currentInstruction != null)
+            {
+                afterArray.Add(currentInstruction);
+                currentInstruction = currentInstruction.Next;
+            }
+
+            // remove all the instructions
             processor.Clear();
 
-            // append everything before array.
-            foreach (var before in beforeArray) processor.Append(before);
+            // get the instructions to create the array with all its values
+            var newArray = _arrayBuilder.CreateEmptyArray(processor, _type);
 
-            var newArray = _arrayBuilder.CreateRandomizedArray(processor, 0, _type, new object[0]);
-
-            // append new array
+            // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
 
-            // append after array.
+            // append after array instructions to processor
             foreach (var after in afterArray) processor.Append(after);
 
             _methodDefinition.Body.OptimizeMacros();
