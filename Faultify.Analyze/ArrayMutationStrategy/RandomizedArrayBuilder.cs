@@ -28,11 +28,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             if (arrayType.ToSystemType() == typeof(long) || arrayType.ToSystemType() == typeof(ulong))
                 opcodeTypeValueAssignment = OpCodes.Ldc_I4;
 
+            // create the list
             var list = new List<Instruction>
             {
                 processor.Create(OpCodes.Ldc_I4, length),
                 processor.Create(OpCodes.Newarr, arrayType)
             };
+
+            // for each item in the original array, create a new, random one (flipped for bools)
             for (var i = 0; i < length; i++)
             {
                 var random = _randomValueGenerator.GenerateValueForField(arrayType.ToSystemType(), data[i]);
@@ -41,12 +44,31 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
                 if (length > 2147483647 && length < -2147483647) list.Add(processor.Create(OpCodes.Ldc_I8, i));
                 else list.Add(processor.Create(OpCodes.Ldc_I4, i));
+                
                 list.Add(processor.Create(opcodeTypeValueAssignment, random));
 
-                if (arrayType.ToSystemType() == typeof(long) || arrayType.ToSystemType() == typeof(ulong))
+                if (arrayType.ToSystemType() == typeof(long) || arrayType.ToSystemType() == typeof(ulong)) 
                     list.Add(processor.Create(OpCodes.Conv_I8));
+
                 list.Add(processor.Create(stelem));
             }
+
+            return list;
+        }
+
+        /// <summary>
+        ///     Creates the instructions for a new, empty array
+        /// </summary>
+        /// <param name="processor"></param>
+        /// <param name="arrayType"></param>
+        /// <returns></returns>
+        public List<Instruction> CreateEmptyArray(ILProcessor processor, TypeReference arrayType)
+        {
+            var list = new List<Instruction>
+            {
+                processor.Create(OpCodes.Ldc_I4, 0),
+                processor.Create(OpCodes.Newarr, arrayType)
+            };
 
             return list;
         }
