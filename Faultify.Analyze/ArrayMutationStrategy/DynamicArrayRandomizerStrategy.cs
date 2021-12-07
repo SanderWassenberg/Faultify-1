@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Faultify.Core.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -19,6 +21,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         {
             _randomizedArrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
+            _type = methodDefinition.ReturnType.GetElementType();
         }
 
         public void Reset(MethodDefinition mutatedMethodDef, MethodDefinition methodClone)
@@ -38,19 +41,34 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             var length = 0;
             var afterArray = new List<Instruction>();
+            Dictionary<string, int> variabele = new Dictionary<string, int>();
 
             var currentInstruction = _methodDefinition.Body.Instructions[0];
 
             // Get the length and type of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
+            bool isnewarr = false;
             while (currentInstruction != null)
             {
-                if (currentInstruction.OpCode == OpCodes.Ldc_I4) length = (int)currentInstruction.Operand;
-                if(currentInstruction.OpCode == OpCodes.Newarr) _type = (TypeReference)currentInstruction.Operand;
-                if (currentInstruction.OpCode == OpCodes.Dup) break;
+                if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Next.OpCode == OpCodes.Newarr)
+                    length = (int)currentInstruction.Operand;
+
+                if (currentInstruction.OpCode == OpCodes.Newarr)
+                {
+                    isnewarr = true;
+                }
+
+                if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
+                    break;
+
+                if (_type.ToSystemType() == typeof(bool) && currentInstruction.OpCode == OpCodes.Stloc && currentInstruction.Previous.OpCode == OpCodes.Ldc_I4)
+                {
+                    variabele.Add(currentInstruction.Operand.ToString(), (int)currentInstruction.Previous.Operand);
+                }
 
                 currentInstruction = currentInstruction.Next;
             }
+
             currentInstruction = currentInstruction?.Next;
 
             // create a new object array with the length of the original array
@@ -81,7 +99,15 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                     // the first Ldc_i4 instruction sets the index, the following commands sets the value
                     if (currentInstruction.OpCode == OpCodes.Ldc_I4)
                     {
-                        data[(int) currentInstruction.Operand] = currentInstruction.Next.Operand;
+                        if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
+                        {
+                            string ldloc = currentInstruction.Next.Operand.ToString();
+                            data[(int)currentInstruction.Operand] = variabele[ldloc];
+                        }
+                        else
+                        {
+                            data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
+                        }
                         currentInstruction = currentInstruction.Next;
                     }
 
@@ -98,7 +124,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             // remove all the instructions
             processor.Clear();
-            
+
             // get the instructions to create the array with all its values
             var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data);
 
