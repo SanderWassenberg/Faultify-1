@@ -186,7 +186,7 @@ namespace Faultify.Injection
                 method.Body.Instructions.Insert(0, entityHandleInstruction);
 
                 // Insert the method signaling the end of the test. This needs to be insterted in place of the last instruction, which is 'ret'.
-                // The Count-1 is therefore very important, if you don,t the instruction is placed after 'ret', which makes it unreachable code.
+                // The Count-1 is therefore very important, if you don't the instruction is placed after 'ret', which makes it unreachable code.
                 method.Body.Instructions.Insert(method.Body.Instructions.Count-1, endRegisterInstruction);
             }
         }
