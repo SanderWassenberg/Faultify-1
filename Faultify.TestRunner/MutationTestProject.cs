@@ -303,8 +303,8 @@ namespace Faultify.TestRunner
                             // Store the timed out mutations such that they can be excluded.
                             timedOutMutations.AddRange(testResult.GetTimedOutTests());
 
-                            // For each mutation add it to the report builder.
-                            reportBuilder.AddTestResult(testResult.TestResults, testResult.Mutations,
+                            // For each mutation that does not cause a timeout add it to the report builder.
+                            reportBuilder.AddTestResult(testResult.TestResults, testResult.Mutations.Where(m => !m.CausesTimeOut),
                                 singRunsStopwatch.Elapsed);
                         }
 
