@@ -92,5 +92,10 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             _methodDefinition.Body.OptimizeMacros();
         }
+
+        public string GetStrategyStringForReport()
+        {
+            return "Emptied the Array";
+        }
     }
 }

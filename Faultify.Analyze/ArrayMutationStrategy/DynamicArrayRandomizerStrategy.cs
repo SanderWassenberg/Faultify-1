@@ -110,5 +110,10 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             _methodDefinition.Body.OptimizeMacros();
         }
+
+        public string GetStrategyStringForReport()
+        {
+            return "Randomized the Array";
+        }
     }
 }

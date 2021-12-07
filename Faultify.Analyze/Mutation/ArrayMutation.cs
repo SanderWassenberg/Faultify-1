@@ -37,6 +37,6 @@ namespace Faultify.Analyze.Mutation
             _arrayMutationStrategy.Reset(_methodDefinitionToMutate, _methodDefClone);
         }
 
-        public string Report => "Change array contents.";
+        public string Report => "Change array contents. " + _arrayMutationStrategy.GetStrategyStringForReport();
     }
 }
