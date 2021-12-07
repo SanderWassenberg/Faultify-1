@@ -23,7 +23,7 @@ namespace Faultify.Injection
 
         private TestCoverageInjector()
         {
-            // Get the ModuleDefintion for the Assembly in which the enjection methods are located.
+            // Get the ModuleDefintion for the Assembly in which the injection methods are located.
             using var injectionAssembly = ModuleDefinition.ReadModule(_currentAssemblyPath);
 
             // Local function for getting the MethodDefinitions, it needs to be repeated for each method that we inject.
@@ -129,26 +129,24 @@ namespace Faultify.Injection
         public void InjectTargetCoverage(ModuleDefinition module)
         {
             foreach (var typeDefinition in module.Types.Where(x => !x.Name.StartsWith("<")))
-                // Find sum method
-            foreach (var method in typeDefinition.Methods)
             {
-                var registerMethodReference = method.Module.ImportReference(_registerTargetCoverage);
+                foreach (var method in typeDefinition.Methods)
+                {
+                    if (method.Body == null) continue;
 
-                if (method.Body == null)
-                    continue;
+                    var processor = method.Body.GetILProcessor();
 
-                var processor = method.Body.GetILProcessor();
+                    // Insert instructions that load the MetaDataToken as parameter for the register method.
+                    var assemblyName = processor.Create(OpCodes.Ldstr, method.Module.Assembly.Name.Name);
+                    var entityHandle = processor.Create(OpCodes.Ldc_I4, method.MetadataToken.ToInt32());
 
-                // Insert instructions that loads the meta data token as parameter for the register method.
-                var assemblyName = processor.Create(OpCodes.Ldstr, method.Module.Assembly.Name.Name);
-                var entityHandle = processor.Create(OpCodes.Ldc_I4, method.MetadataToken.ToInt32());
+                    // Insert instruction that calls the register function.
+                    var callInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_registerTargetCoverage));
 
-                // Insert instruction that calls the register function.
-                var callInstruction = processor.Create(OpCodes.Call, registerMethodReference);
-
-                method.Body.Instructions.Insert(0, callInstruction);
-                method.Body.Instructions.Insert(0, entityHandle);
-                method.Body.Instructions.Insert(0, assemblyName);
+                    method.Body.Instructions.Insert(0, callInstruction);
+                    method.Body.Instructions.Insert(0, entityHandle);
+                    method.Body.Instructions.Insert(0, assemblyName);
+                }
             }
         }
 
@@ -162,32 +160,34 @@ namespace Faultify.Injection
                 _registerTargetCoverage.Module.AssemblyReferences.First(x => x.Name == "Faultify.TestRunner.Shared"));
 
             foreach (var typeDefinition in module.Types.Where(x => !x.Name.StartsWith("<")))
-            foreach (var method in typeDefinition.Methods
-                .Where(m => m.HasCustomAttributes && m.CustomAttributes
-                    .Any(x => x.AttributeType.Name == "TestAttribute" ||
-                        x.AttributeType.Name == "TestMethodAttribute" ||
-                        x.AttributeType.Name == "FactAttribute"))
-            )
             {
-                if (method.Body == null)
-                    continue;
+                var testMethods = typeDefinition.Methods.Where(m =>
+                    m.HasCustomAttributes && m.CustomAttributes.Any(x =>
+                        x.AttributeType.Name == "TestAttribute" ||
+                        x.AttributeType.Name == "TestMethodAttribute" ||
+                        x.AttributeType.Name == "FactAttribute"));
 
-                var processor = method.Body.GetILProcessor();
+                foreach (var method in testMethods)
+                {
+                    if (method.Body == null) continue;
 
-                // The string with which the register-method identifies the current test.
-                Instruction entityHandleInstruction = processor.Create(OpCodes.Ldstr, method.DeclaringType.FullName + "." + method.Name);
+                    var processor = method.Body.GetILProcessor();
+                    
+                    // The string with which the register-method identifies the current test.
+                    Instruction entityHandleInstruction = processor.Create(OpCodes.Ldstr, method.DeclaringType.FullName + "." + method.Name);
 
-                // The register methods.
-                Instruction beginRegisterInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_beginRegisterTestCoverage));
-                Instruction endRegisterInstruction =   processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
+                    // The register methods.
+                    Instruction beginRegisterInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_beginRegisterTestCoverage));
+                    Instruction endRegisterInstruction =   processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
 
-                // Insert the method signaling the start of a test, insert at index 0.
-                method.Body.Instructions.Insert(0, beginRegisterInstruction);
-                method.Body.Instructions.Insert(0, entityHandleInstruction);
+                    // Insert the method signaling the start of a test, insert at index 0.
+                    method.Body.Instructions.Insert(0, beginRegisterInstruction);
+                    method.Body.Instructions.Insert(0, entityHandleInstruction);
 
-                // Insert the method signaling the end of the test. This needs to be insterted in place of the last instruction, which is 'ret'.
-                // The Count-1 is therefore very important, if you don't the instruction is placed after 'ret', which makes it unreachable code.
-                method.Body.Instructions.Insert(method.Body.Instructions.Count-1, endRegisterInstruction);
+                    // Insert the method signaling the end of the test. This needs to be insterted in place of the last instruction, which is 'ret'.
+                    // The Count-1 is therefore very important, if you don't the instruction is placed after 'ret', which makes it unreachable code.
+                    method.Body.Instructions.Insert(method.Body.Instructions.Count - 1, endRegisterInstruction);
+                }
             }
         }
     }
