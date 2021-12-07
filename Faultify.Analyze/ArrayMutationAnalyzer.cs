@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Faultify.Analyze.ArrayMutationStrategy;
 using Faultify.Analyze.Mutation;
 using Faultify.Core.Extensions;
@@ -40,10 +41,17 @@ namespace Faultify.Analyze
         public IEnumerable<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
+            List<ArrayMutation> mutations = new List<ArrayMutation>();
              foreach (var instruction in method.Body.Instructions)
                 // Call the corresponding strategy based on the result
-                if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
-                    yield return new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method);
+                 if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
+                 {
+                     //Add all possible or desired strategies to the mutation list
+                     mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
+                     mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
+                 }
+
+             return mutations;
         }
 
         /// <summary>
