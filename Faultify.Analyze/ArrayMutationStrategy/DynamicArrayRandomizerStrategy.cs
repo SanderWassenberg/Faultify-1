@@ -41,11 +41,11 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             var length = 0;
             var afterArray = new List<Instruction>();
-            Dictionary<string, int> variabele = new Dictionary<string, int>();
+            Dictionary<string, int> localVariables = new Dictionary<string, int>();
 
             var currentInstruction = _methodDefinition.Body.Instructions[0];
 
-            // Get the length and type of the array from the instructions
+            // Get the length of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
             bool isnewarr = false;
             while (currentInstruction != null)
@@ -63,7 +63,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
                 if (_type.ToSystemType() == typeof(bool) && currentInstruction.OpCode == OpCodes.Stloc && currentInstruction.Previous.OpCode == OpCodes.Ldc_I4)
                 {
-                    variabele.Add(currentInstruction.Operand.ToString(), (int)currentInstruction.Previous.Operand);
+                    localVariables.Add(currentInstruction.Operand.ToString(), (int)currentInstruction.Previous.Operand);
                 }
 
                 currentInstruction = currentInstruction.Next;
@@ -102,7 +102,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
                         {
                             string ldloc = currentInstruction.Next.Operand.ToString();
-                            data[(int)currentInstruction.Operand] = variabele[ldloc];
+                            data[(int)currentInstruction.Operand] = localVariables[ldloc];
                         }
                         else
                         {
