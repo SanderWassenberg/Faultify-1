@@ -276,7 +276,7 @@ namespace Faultify.TestRunner
             var completedRuns = 0;
             var failedRuns = 0;
 
-            sessionProgressTracker.LogBeginTestSession(totalRunsCount, mutationCount, maxTestDuration);
+            sessionProgressTracker.LogBeginTestSession(totalRunsCount, mutationCount, coverageTestRunTime);
 
             // Stores timed out mutations which will be excluded from test runs if they occur. 
             // Timed out mutations will be removed because they can cause serious test delays.
