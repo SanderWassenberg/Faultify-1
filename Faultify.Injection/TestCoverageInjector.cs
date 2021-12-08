@@ -181,8 +181,8 @@ namespace Faultify.Injection
                     Instruction endRegisterInstruction =   processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
 
                     // Insert the method signaling the start of a test, insert at index 0.
-                    method.Body.Instructions.Insert(0, beginRegisterInstruction);
-                    method.Body.Instructions.Insert(0, entityHandleInstruction);
+                    method.Body.Instructions.Insert(0, beginRegisterInstruction); // method call
+                    method.Body.Instructions.Insert(0, entityHandleInstruction);  // its argument
 
                     // Insert the method signaling the end of the test. This needs to be insterted in place of the last instruction, which is 'ret'.
                     // The Count-1 is therefore very important, if you don't the instruction is placed after 'ret', which makes it unreachable code.
