@@ -60,16 +60,15 @@ namespace Faultify.TestRunner.Logging
                 LogMessageType.MessageBlock);
         }
 
-        public void LogTestFailed(List<string> failedTests)
+        public void LogTestFailedAndExit(List<string> failedTests)
         {
             _currentPercentage = 100;
 
             var logFailedTests = "";
             failedTests.ForEach(x => { logFailedTests += $"| - {x}\n"; });
 
-            Log("Process stopped: Not all unit-tests passed in the target project\n" +
-                $"{logFailedTests}",
-                LogMessageType.Error
+            LogCriticalErrorAndExit("Process stopped: Not all unit-tests passed in the target project\n" +
+                $"{logFailedTests}"
                 );
         }
 

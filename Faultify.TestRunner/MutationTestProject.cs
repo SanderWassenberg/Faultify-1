@@ -77,7 +77,7 @@ namespace Faultify.TestRunner
             // Begin code coverage on first project.
             var duplicationPool = new TestProjectDuplicationPool(duplications);
             var coverageProject = duplicationPool.TakeTestProject();
-            var coverageProjectInfo = GetTestProjectInfo(coverageProject, projectInfo);
+            var coverageProjectInfo = GetTestProjectInfo(coverageProject, projectInfo, progressTracker);
 
             // Measure the test coverage 
             progressTracker.LogBeginCoverage();
@@ -109,7 +109,7 @@ namespace Faultify.TestRunner
         ///     Returns information about the test project.
         /// </summary>
         /// <returns></returns>
-        private TestProjectInfo GetTestProjectInfo(TestProjectDuplication duplication, IProjectInfo testProjectInfo)
+        private TestProjectInfo GetTestProjectInfo(TestProjectDuplication duplication, IProjectInfo testProjectInfo, MutationSessionProgressTracker progressTracker)
         {
             var testFramework = GetTestFramework(testProjectInfo);
 
@@ -123,7 +123,13 @@ namespace Faultify.TestRunner
             // Foreach project reference load it in memory as an 'assembly mutator'.
             foreach (var projectReferencePath in duplication.TestProjectReferences)
             {
-                var loadProjectReferenceModel = new AssemblyMutator(projectReferencePath.FullFilePath());
+                string referencePath = projectReferencePath.FullFilePath();
+                if (!File.Exists(referencePath))
+                {
+                    progressTracker.LogCriticalErrorAndExit($"Couldn't find class library \"{projectReferencePath.Name}\", please check project output settings.");
+                }
+
+                var loadProjectReferenceModel = new AssemblyMutator(referencePath);
 
                 if (loadProjectReferenceModel.Types.Count > 0)
                     projectInfo.DependencyAssemblies.Add(loadProjectReferenceModel);
