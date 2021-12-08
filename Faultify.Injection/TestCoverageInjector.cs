@@ -18,28 +18,31 @@ namespace Faultify.Injection
         private readonly string _currentAssemblyPath = typeof(TestCoverageInjector).Assembly.Location;
         private readonly MethodDefinition _initializeMethodDefinition;
         private readonly MethodDefinition _registerTargetCoverage;
-        private readonly MethodDefinition _registerTestCoverage;
+        private readonly MethodDefinition _beginRegisterTestCoverage;
+        private readonly MethodDefinition _endRegisterTestCoverage;
 
         private TestCoverageInjector()
         {
-            // Retrieve the method definition for the register functions. 
-            var registerTargetCoverage = nameof(CoverageRegistry.RegisterTargetCoverage);
-            var registerTestCoverage = nameof(CoverageRegistry.RegisterTestCoverage);
-            var initializeMethodName = nameof(CoverageRegistry.Initialize);
-
+            // Get the ModuleDefintion for the Assembly in which the injection methods are located.
             using var injectionAssembly = ModuleDefinition.ReadModule(_currentAssemblyPath);
 
-            _registerTargetCoverage = injectionAssembly.Types
-                .SelectMany(x => x.Methods.Where(y => y.Name == registerTargetCoverage)).First();
+            // Local function for getting the MethodDefinitions, it needs to be repeated for each method that we inject.
+            MethodDefinition GetMethodDefinition(string name) =>
+                injectionAssembly.Types.SelectMany(x => x.Methods.Where(y => y.Name == name)).First();
 
-            _registerTestCoverage = injectionAssembly.Types
-                .SelectMany(x => x.Methods.Where(y => y.Name == registerTestCoverage)).First();
+            // Retrieve the method definitions for the register functions. 
+            _registerTargetCoverage = GetMethodDefinition(nameof(CoverageRegistry.RegisterTargetCoverage));
+            _beginRegisterTestCoverage = GetMethodDefinition(nameof(CoverageRegistry.BeginRegisterTestCoverage));
+            _endRegisterTestCoverage = GetMethodDefinition(nameof(CoverageRegistry.EndRegisterTestCoverage));
+            _initializeMethodDefinition = GetMethodDefinition(nameof(CoverageRegistry.Initialize));
 
-            _initializeMethodDefinition = injectionAssembly.Types
-                .SelectMany(x => x.Methods.Where(y => y.Name == initializeMethodName)).First();
-
-            if (_initializeMethodDefinition == null || _registerTargetCoverage == null)
+            if (_initializeMethodDefinition is null ||
+                _registerTargetCoverage is null ||
+                _beginRegisterTestCoverage is null ||
+                _endRegisterTestCoverage is null)
+            {
                 throw new Exception("Testcoverage Injector could not initialize injection methods");
+            }
         }
 
         public static TestCoverageInjector Instance => Lazy.Value;
@@ -126,28 +129,24 @@ namespace Faultify.Injection
         public void InjectTargetCoverage(ModuleDefinition module)
         {
             foreach (var typeDefinition in module.Types.Where(x => !x.Name.StartsWith("<")))
-                // Find sum method
-            foreach (var method in typeDefinition.Methods)
             {
-                var registerMethodReference = method.Module.ImportReference(_registerTargetCoverage);
+                foreach (var method in typeDefinition.Methods)
+                {
+                    if (method.Body == null) continue;
 
-                if (method.Body == null)
-                    continue;
+                    var processor = method.Body.GetILProcessor();
 
-                var processor = method.Body.GetILProcessor();
+                    // Insert instructions that load the MetaDataToken as parameter for the register method.
+                    var assemblyName = processor.Create(OpCodes.Ldstr, method.Module.Assembly.Name.Name);
+                    var entityHandle = processor.Create(OpCodes.Ldc_I4, method.MetadataToken.ToInt32());
 
-                // Insert instruction that loads the meta data token as parameter for the register method.
-                var assemblyName = processor.Create(OpCodes.Ldstr, method.Module.Assembly.Name.Name);
+                    // Insert instruction that calls the register function.
+                    var callInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_registerTargetCoverage));
 
-                // Insert instruction that loads the meta data token as parameter for the register method.
-                var entityHandle = processor.Create(OpCodes.Ldc_I4, method.MetadataToken.ToInt32());
-
-                // Insert instruction that calls the register function.
-                var callInstruction = processor.Create(OpCodes.Call, registerMethodReference);
-
-                method.Body.Instructions.Insert(0, callInstruction);
-                method.Body.Instructions.Insert(0, entityHandle);
-                method.Body.Instructions.Insert(0, assemblyName);
+                    method.Body.Instructions.Insert(0, callInstruction);
+                    method.Body.Instructions.Insert(0, entityHandle);
+                    method.Body.Instructions.Insert(0, assemblyName);
+                }
             }
         }
 
@@ -156,31 +155,39 @@ namespace Faultify.Injection
         /// </summary>
         public void InjectTestCoverage(ModuleDefinition module)
         {
-            module.AssemblyReferences.Add(_registerTestCoverage.Module.Assembly.Name);
+            module.AssemblyReferences.Add(_beginRegisterTestCoverage.Module.Assembly.Name);
             module.AssemblyReferences.Add(
                 _registerTargetCoverage.Module.AssemblyReferences.First(x => x.Name == "Faultify.TestRunner.Shared"));
 
             foreach (var typeDefinition in module.Types.Where(x => !x.Name.StartsWith("<")))
-            foreach (var method in typeDefinition.Methods
-                .Where(m => m.HasCustomAttributes && m.CustomAttributes
-                    .Any(x => x.AttributeType.Name == "TestAttribute" ||
-                              x.AttributeType.Name == "TestMethodAttribute" ||
-                              x.AttributeType.Name == "FactAttribute")))
             {
-                var registerMethodReference = method.Module.ImportReference(_registerTestCoverage);
+                var testMethods = typeDefinition.Methods.Where(m =>
+                    m.HasCustomAttributes && m.CustomAttributes.Any(x =>
+                        x.AttributeType.Name == "TestAttribute" ||
+                        x.AttributeType.Name == "TestMethodAttribute" ||
+                        x.AttributeType.Name == "FactAttribute"));
 
-                if (method.Body == null)
-                    continue;
+                foreach (var method in testMethods)
+                {
+                    if (method.Body == null) continue;
 
-                var processor = method.Body.GetILProcessor();
-                // Insert instruction that loads the meta data token as parameter for the register method.
-                var entityHandle = processor.Create(OpCodes.Ldstr, method.DeclaringType.FullName + "." + method.Name);
+                    var processor = method.Body.GetILProcessor();
+                    
+                    // The string with which the register-method identifies the current test.
+                    Instruction entityHandleInstruction = processor.Create(OpCodes.Ldstr, method.DeclaringType.FullName + "." + method.Name);
 
-                // Insert instruction that calls the register function.
-                var callInstruction = processor.Create(OpCodes.Call, registerMethodReference);
+                    // The register methods.
+                    Instruction beginRegisterInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_beginRegisterTestCoverage));
+                    Instruction endRegisterInstruction =   processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
 
-                method.Body.Instructions.Insert(0, callInstruction);
-                method.Body.Instructions.Insert(0, entityHandle);
+                    // Insert the method signaling the start of a test, insert at index 0.
+                    method.Body.Instructions.Insert(0, beginRegisterInstruction); // method call
+                    method.Body.Instructions.Insert(0, entityHandleInstruction);  // its argument
+
+                    // Insert the method signaling the end of the test. This needs to be insterted in place of the last instruction, which is 'ret'.
+                    // The Count-1 is therefore very important, if you don't the instruction is placed after 'ret', which makes it unreachable code.
+                    method.Body.Instructions.Insert(method.Body.Instructions.Count - 1, endRegisterInstruction);
+                }
             }
         }
     }

@@ -12,7 +12,8 @@ namespace Faultify.Injection
     public static class CoverageRegistry
     {
         private static readonly MutationCoverage MutationCoverage = new();
-        private static string _currentTestCoverage = "NONE";
+        private static bool _runningTest = false;
+        private static string _currentTest;
         private static readonly object RegisterMutex = new();
         private static MemoryMappedFile _mmf;
 
@@ -46,19 +47,19 @@ namespace Faultify.Injection
         {
             lock (RegisterMutex)
             {
+                if (!_runningTest) return;
+
                 try
                 {
-                    if (!MutationCoverage.Coverage.TryGetValue(_currentTestCoverage, out var targetHandles))
+                    if (!MutationCoverage.Coverage.TryGetValue(_currentTest, out var targetHandles))
                     {
                         targetHandles = new List<RegisteredCoverage>();
-                        MutationCoverage.Coverage[_currentTestCoverage] = targetHandles;
+                        MutationCoverage.Coverage[_currentTest] = targetHandles;
                     }
 
                     targetHandles.Add(new RegisteredCoverage(assemblyName, entityHandle));
-
-                    Utils.WriteMutationCoverageFile(MutationCoverage, _mmf);
                 }
-                catch (Exception ex)
+                catch (Exception _)
                 {
                     // ignored
                 }
@@ -66,12 +67,21 @@ namespace Faultify.Injection
         }
 
         /// <summary>
-        ///     Registers the given test case as current method under test.
+        ///     Marks the beginning of the current test.
         /// </summary>
         /// <param name="testName"></param>
-        public static void RegisterTestCoverage(string testName)
+        public static void BeginRegisterTestCoverage(string testName)
         {
-            _currentTestCoverage = testName;
+            _runningTest = true;
+            _currentTest = testName;
+        }
+
+        /// <summary>
+        ///     Marks the end of the current test.
+        /// </summary>
+        public static void EndRegisterTestCoverage()
+        {
+            _runningTest = false;
         }
     }
 }
