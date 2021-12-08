@@ -18,5 +18,10 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         /// <param name="methodBody"></param>
         /// <param name="methodClone"></param>
         public void Reset(MethodDefinition methodBody, MethodDefinition methodClone);
+
+        /// <summary>
+        /// Returns the string for the used array mutation strategy. Used for showing what mutation is performed on the report
+        /// </summary>
+        public string GetStrategyStringForReport();
     }
 }
