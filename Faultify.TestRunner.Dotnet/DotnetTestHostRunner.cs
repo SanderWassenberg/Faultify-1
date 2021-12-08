@@ -85,7 +85,10 @@ namespace Faultify.TestRunner.Dotnet
                 }
                 finally
                 {
-                    if (File.Exists(testResultOutputPath)) File.Delete(testResultOutputPath);
+                    if (File.Exists(testResultOutputPath))
+                    {
+                        File.Delete(testResultOutputPath);
+                    }
                 }
 
             return new TestResults {Tests = testResults};

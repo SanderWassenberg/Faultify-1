@@ -49,9 +49,9 @@ namespace Faultify.TestRunner.Collector
                 var serialized = _testResults.Serialize();
                 File.WriteAllBytes(TestRunnerConstants.TestsFileName, serialized);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                _logger.LogError(context.SessionDataCollectionContext, "Test Session Exception: {ex}");
+                _logger.LogError(context.SessionDataCollectionContext, $"Test Session Exception: {ex}");
             }
 
             _logger.LogWarning(context.SessionDataCollectionContext, "Test Session Finished");

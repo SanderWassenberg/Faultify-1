@@ -231,7 +231,8 @@ namespace Faultify.TestRunner
             catch (Exception e)
             {
                 _testHostLogger.LogError(e, "Unable to create Test Coverage Runner");
-                throw; // TODO: Maybe return null
+                progressTracker.LogCriticalErrorAndExit("Unable to create Test Coverage Runner");
+                return null; // above statment exits the process already
             }
         }
 
