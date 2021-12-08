@@ -4,6 +4,8 @@ namespace Faultify.Cli
 {
     internal static class ConsoleMessage
     {
+        private static readonly object ConsoleMutex = new object();
+
         private static readonly string _logo = @"    
              ______            ____  _ ____     
             / ____/___ ___  __/ / /_(_) __/_  __
@@ -15,25 +17,30 @@ namespace Faultify.Cli
 
         public static void PrintLogo()
         {
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(_logo);
-            Console.ForegroundColor = ConsoleColor.White;
+            Print(_logo);
         }
 
         public static void PrintSettings(Settings settings)
         {
             var settingsString =
                 "\n" +
-                $"| Mutation Level: {settings.MutationLevel} \t\t \n" +
-                $"| Test Runners: {settings.Parallel} \t\t \n" +
-                $"| Report Path: {settings.ReportPath} \t\t \n" +
-                $"| Report Type: {settings.ReportType} \t\t \n" +
-                $"| Test Project Path: {settings.TestProjectPath} \t\t \n" +
+                $"| Mutation Level: {settings.MutationLevel}\n" +
+                $"| Test Runners: {settings.Parallel}\n" +
+                $"| Report Path: {settings.ReportPath}\n" +
+                $"| Report Type: {settings.ReportType}\n" +
+                $"| Test Project Path: {settings.TestProjectPath}\n" +
                 "\n";
 
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(settingsString);
-            Console.ForegroundColor = ConsoleColor.White;
+            Print(settingsString, ConsoleColor.Green);
+        }
+
+        public static void Print(string message, ConsoleColor color = ConsoleColor.Cyan)
+        {
+            lock (ConsoleMutex)
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(message);
+            }
         }
     }
 }

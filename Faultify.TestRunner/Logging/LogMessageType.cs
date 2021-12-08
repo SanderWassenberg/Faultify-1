@@ -2,10 +2,8 @@
 {
     public enum LogMessageType
     {
-        CodeCoverage,
         TestRunUpdate,
-        TestSessionStart,
-        TestSessionEnd,
+        MessageBlock,
         Error,
         Other
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,12 @@ namespace Faultify.TestRunner
             var projectInfo = await BuildProject(progressTracker, _testProjectPath);
             progressTracker.LogEndPreBuilding();
 
+            // Check if the build succeeded
+            if (!File.Exists(projectInfo.AssemblyPath))
+            {
+                progressTracker.LogCriticalErrorAndExit("Couldn't build the unit-testproject. Please check for build errors.");
+            }
+
             // Copy project N times
             progressTracker.LogBeginProjectDuplication(_parallel);
             var testProjectCopier = new TestProjectDuplicator(Directory.GetParent(projectInfo.AssemblyPath).FullName);
@@ -76,11 +83,14 @@ namespace Faultify.TestRunner
             progressTracker.LogBeginCoverage();
             PrepareAssembliesForCodeCoverage(coverageProjectInfo);
 
-            var coverageTimer = new Stopwatch();
-            coverageTimer.Start();
+            var coverageTimer = Stopwatch.StartNew();
             var coverage = await RunCoverage(progressTracker, coverageProject.TestProjectFile.FullFilePath(), cancellationToken);
-            
             coverageTimer.Stop();
+
+            if (coverage.Coverage.Count <= 0)
+            {
+                progressTracker.LogCriticalErrorAndExit("Found 0 test-coverage, terminating. Either the unit-tests don't test any methods, or something went wrong whilst calculating the coverage.");
+            }
 
             var timeout = _createTimeOut(coverageTimer);
 

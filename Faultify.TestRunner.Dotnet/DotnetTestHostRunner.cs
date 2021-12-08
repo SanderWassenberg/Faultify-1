@@ -105,9 +105,10 @@ namespace Faultify.TestRunner.Dotnet
                 var process = await coverageProcessRunner.RunAsync();
 
                 var output = coverageProcessRunner.Output.ToString();
+                var errorOutput = coverageProcessRunner.Error.ToString();
 
                 _logger.LogDebug(output);
-                _logger.LogError(coverageProcessRunner.Error.ToString());
+                _logger.LogError(errorOutput);
 
                 if (process.ExitCode != 0)
                 {

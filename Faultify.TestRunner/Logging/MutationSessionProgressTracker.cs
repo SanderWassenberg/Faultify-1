@@ -57,7 +57,7 @@ namespace Faultify.TestRunner.Logging
                 "| - Inject code coverage functions.\n" +
                 "| - Run test session\n" +
                 "| - Calculate optimal way to execute most mutations in the least amount of test runs.",
-                LogMessageType.CodeCoverage);
+                LogMessageType.MessageBlock);
         }
 
         public void LogTestFailed(List<string> failedTests)
@@ -81,13 +81,13 @@ namespace Faultify.TestRunner.Logging
                 $"| Test Rounds: {totalTestRounds}\n" +
                 $"| Mutations Found: {mutationCount}\n" +
                 $"| Worst Case Time: {totalTestRounds * testRunTime.Seconds}s"
-                , LogMessageType.TestSessionStart
+                , LogMessageType.MessageBlock
             );
         }
 
         public void LogTestRunUpdate(int index, int max, int failedRuns)
         {
-            _currentPercentage = (int)Map(index, 0f, max, 0f, 100f);
+            _currentPercentage = (int) (index / (float)max * 100f);
             Log("Test Run Progress:\n" +
                 $"| Test Runs: {max - index}\n" +
                 $"| Completed: {index}\n" +
@@ -105,8 +105,8 @@ namespace Faultify.TestRunner.Logging
                 $"| Test Rounds: {completedTestRounds}\n" +
                 $"| Mutation per Second: {mutationPerSeconds:0.0}mps\n" +
                 $"| Duration: {elapsed:hh\\:mm\\:ss}\n" +
-                $"| Score: {score:0.0}%" +
-                "\n", LogMessageType.TestSessionEnd
+                $"| Score: {score:0.0}%", 
+                LogMessageType.MessageBlock
             );
         }
 
@@ -114,8 +114,9 @@ namespace Faultify.TestRunner.Logging
         {
             _currentPercentage = 98;
             Log("Generate Report:\n" +
-                $"| Report Path: {reportPath} \t\t \n" +
-                $"| Report Type: {reportType} \t\t \n"
+                $"| Report Path: {reportPath}\n" +
+                $"| Report Type: {reportType}",
+                LogMessageType.MessageBlock
             );
         }
 
@@ -123,7 +124,8 @@ namespace Faultify.TestRunner.Logging
         {
             _currentPercentage = 100;
             Log("Faultify is Done:\n" +
-                $"| Logs: {processLog} \t\t"
+                $"| Logs: {processLog}",
+                LogMessageType.MessageBlock
             );
         }
 
@@ -138,9 +140,11 @@ namespace Faultify.TestRunner.Logging
             _progress.Report(new MutationRunProgress(message, _currentPercentage, logMessageType));
         }
 
-        private static float Map(float value, float fromSource, float toSource, float fromTarget, float toTarget)
+        public void LogCriticalErrorAndExit(string message, Action beforeExit = null)
         {
-            return (value - fromSource) / (toSource - fromSource) * (toTarget - fromTarget) + fromTarget;
+            Log(message, LogMessageType.Error);
+            beforeExit?.Invoke();
+            Environment.Exit(1);
         }
     }
 }
