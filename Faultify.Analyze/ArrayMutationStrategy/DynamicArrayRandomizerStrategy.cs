@@ -139,7 +139,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
         public string GetStrategyStringForReport()
         {
-            return "Randomized the Array";
+            return $"Randomized the array at location: {_methodDefinition.FullName.Split(']').Last()}";
         }
     }
 }

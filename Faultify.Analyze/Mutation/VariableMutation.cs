@@ -36,9 +36,9 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change variable from: '{Original}' to: '{Replacement}'.";
+                    return $"Change variable from: '{Original}' to '{Replacement}'";
 
-                return $"Change variable from: '{Original}' to: '{Replacement}'. In line {LineNumber}";
+                return $"Change variable from: '{Original}' to '{Replacement}' at line {LineNumber}";
             }
         }
     }

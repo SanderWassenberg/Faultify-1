@@ -95,7 +95,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
         public string GetStrategyStringForReport()
         {
-            return "Emptied the Array";
+            return $"Emptied the array at location: {_methodDefinition.FullName.Split(']').Last()}";
         }
     }
 }
