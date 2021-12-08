@@ -262,8 +262,8 @@ namespace Faultify.TestRunner
             var runs = defaultMutationTestRunGenerator.GenerateMutationTestRuns(testsPerMutation, testProjectInfo,
                 _mutationLevel);
 
-            // Double the time the code coverage took such that test runs have some time run their tests (needs to be in seconds).
-            var maxTestDuration = TimeSpan.FromSeconds((coverageTestRunTime * 2).Seconds);
+            // Set the time the code coverage took such that test runs have some time run their tests (needs to be in seconds).
+            var maxTestDuration = TimeSpan.FromSeconds(Math.Round(coverageTestRunTime.TotalMilliseconds / 1000));
 
             var reportBuilder = new TestProjectReportModelBuilder(testProjectInfo.TestModule.Name);
 
