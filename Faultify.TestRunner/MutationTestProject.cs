@@ -339,7 +339,7 @@ namespace Faultify.TestRunner
                 }
                 finally
                 {
-                    lock (this)
+                    lock (this) // WHY WOULD YOU DO THAT https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/lock-statement#guidelines
                     {
                         completedRuns += 1;
                         sessionProgressTracker.LogTestRunUpdate(completedRuns, totalRunsCount, failedRuns);

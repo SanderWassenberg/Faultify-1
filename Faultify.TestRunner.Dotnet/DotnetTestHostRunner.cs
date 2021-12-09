@@ -113,8 +113,12 @@ namespace Faultify.TestRunner.Dotnet
 
             if (process.ExitCode != 0)
             {
-                var fileNotFoundRegex = new Regex(@"----> System\.IO\.FileNotFoundException : (.*)netstandard(.*)\n");
-                if (fileNotFoundRegex.IsMatch(output))
+                if (errorOutput.Contains("The active test run was aborted."))
+                {
+                    progressTracker.LogCriticalErrorAndExit($"Coverage calculation failed. Please be sure your tests succeed by default.\n--- test host error output ---\n{errorOutput.Trim()}");
+                }
+                
+                if (Regex.IsMatch(output, @"----> System\.IO\.FileNotFoundException : (.*)netstandard(.*)\n"))
                 {
                     progressTracker.LogCriticalErrorAndExit("Trying to mutate a .NET Framework project. Faultify currently doesn't support Framework projects.");
                 }
