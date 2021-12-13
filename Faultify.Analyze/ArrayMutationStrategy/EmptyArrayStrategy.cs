@@ -24,6 +24,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         {
             _arrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
+            _type = methodDefinition.ReturnType.GetElementType();
         }
 
         public void Reset(MethodDefinition methodBody, MethodDefinition methodClone)
@@ -38,20 +39,28 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             var processor = _methodDefinition.Body.GetILProcessor();
             _methodDefinition.Body.SimplifyMacros();
 
-            var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
 
             var currentInstruction = _methodDefinition.Body.Instructions[0];
 
             // Get the type of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
+            bool isnewarr = false;
             while (currentInstruction != null)
             {
-                if (currentInstruction.OpCode == OpCodes.Newarr) _type = (TypeReference)currentInstruction.Operand;
-                if (currentInstruction.OpCode == OpCodes.Dup) break;
+                if (currentInstruction.OpCode == OpCodes.Newarr)
+                {
+                    isnewarr = true;
+                }
+
+                if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
+                {
+                    break;
+                }
 
                 currentInstruction = currentInstruction.Next;
             }
+
             currentInstruction = currentInstruction?.Next;
 
             // Process the values of the array. we want to skip all of them since the new array will be empty
