@@ -30,7 +30,7 @@ namespace Faultify.TestRunner.Shared
             return memoryStream.ToArray();
         }
 
-        public static TestResults Deserialize(byte[] data)
+        public static TestResults Deserialize(byte[] data, bool trimNames = false)
         {
             var testResults = new TestResults();
             var memoryStream = new MemoryStream(data);
@@ -41,7 +41,7 @@ namespace Faultify.TestRunner.Shared
                 var testResult = new TestResult();
                 var name = binaryReader.ReadString();
                 var testOutcome = (TestOutcome)binaryReader.ReadInt32();
-                testResult.Name = name;
+                testResult.Name = trimNames ? name.Split('(')[0] : name;
                 testResult.Outcome = testOutcome;
                 testResults.Tests.Add(testResult);
             }

@@ -63,7 +63,7 @@ namespace Faultify.TestRunner.Collector
 
             // Register this test because there is a possibility for the test host to crash before the end event. 
             _testResults.Tests.Add(new TestResult
-                { Outcome = TestOutcome.None, Name = GetFullTestName(e) });
+                { Outcome = TestOutcome.None, Name = e.TestElement.FullyQualifiedName });
         }
 
         private void EventsOnTestCaseEnd(object sender, TestCaseEndEventArgs e)
@@ -71,7 +71,7 @@ namespace Faultify.TestRunner.Collector
             _logger.LogWarning(context.SessionDataCollectionContext, $"Test Case End: {e.TestCaseName}");
 
             // Find the test and set the correct test outcome.
-            var test = _testResults.Tests.FirstOrDefault(x => x.Name == GetFullTestName(e));
+            var test = _testResults.Tests.FirstOrDefault(x => x.Name == e.TestElement.FullyQualifiedName);
 
             if (test == null)
             {
@@ -81,17 +81,6 @@ namespace Faultify.TestRunner.Collector
             }
 
             test.Outcome = e.TestOutcome;
-        }
-
-        /// <summary>
-        /// Gets the name of the test formatted as: Project.Class.MethodName
-        /// Filters out any arguments passed to testcases like Project.Class.MethodName(1,1,2)
-        /// </summary>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        private static string GetFullTestName(TestCaseEventArgs args)
-        {
-            return args.TestElement.FullyQualifiedName.Split('(')[0];
         }
     }
 }
