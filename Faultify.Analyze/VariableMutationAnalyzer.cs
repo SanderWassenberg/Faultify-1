@@ -49,9 +49,7 @@ namespace Faultify.Analyze
 
                 if (instruction.OpCode != OpCodes.Stloc) continue;
 
-                var variableDefinition = instruction.Operand as VariableDefinition;
-
-                if (variableDefinition == null) continue;
+                if (instruction.Operand as VariableDefinition is null) continue;
 
                 try
                 {
@@ -64,7 +62,6 @@ namespace Faultify.Analyze
 
                     // Get variable type. Might throw InvalidCastException
                     var type = ((VariableReference)instruction.Operand).Resolve().VariableType.ToSystemType();
-
 
                     // Get previous instruction.
                     var variableInstruction = instruction.Previous;
@@ -83,8 +80,7 @@ namespace Faultify.Analyze
                                 LineNumber = lineNumber
                             });
                 }
-                // TODO: Catch only the exception(s) that should be ignored for hopefully obvious reasons...
-                catch (Exception e)
+                catch (InvalidCastException e)
                 {
                     // ignore (sometimes `Type.GetType` fails)
                 }

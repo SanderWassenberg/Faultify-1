@@ -85,7 +85,10 @@ namespace Faultify.TestRunner.Dotnet
                 }
                 finally
                 {
-                    if (File.Exists(testResultOutputPath)) File.Delete(testResultOutputPath);
+                    if (File.Exists(testResultOutputPath))
+                    {
+                        File.Delete(testResultOutputPath);
+                    }
                 }
 
             return new TestResults {Tests = testResults};
@@ -99,54 +102,56 @@ namespace Faultify.TestRunner.Dotnet
         /// <returns></returns>
         public async Task<MutationCoverage> RunCodeCoverage(MutationSessionProgressTracker progressTracker, CancellationToken cancellationToken)
         {
-            try
+            var coverageProcessRunner = BuildCodeCoverageTestProcessRunner();
+            var process = await coverageProcessRunner.RunAsync();
+
+            var output = coverageProcessRunner.Output.ToString();
+            var errorOutput = coverageProcessRunner.Error.ToString();
+
+            _logger.LogDebug(output);
+            _logger.LogError(errorOutput);
+
+            if (process.ExitCode != 0)
             {
-                var coverageProcessRunner = BuildCodeCoverageTestProcessRunner();
-                var process = await coverageProcessRunner.RunAsync();
-
-                var output = coverageProcessRunner.Output.ToString();
-
-                _logger.LogDebug(output);
-                _logger.LogError(coverageProcessRunner.Error.ToString());
-
-                if (process.ExitCode != 0)
+                if (errorOutput.Contains("The active test run was aborted."))
                 {
-                    var regex = new Regex(".*Failed (.*) \\[.*");
-                    if (regex.IsMatch(output))
-                    {
-                        List<string> failedTests = new List<string>();
-                        var myCapturedText = regex.Matches(output);
-                        foreach (Match item in myCapturedText)
-                        {
-                            failedTests.Add(item.Groups[1].Value);
-                        }
-
-                        progressTracker.LogTestFailed(failedTests);
-                    }
-
-                    throw new ExitCodeException(process.ExitCode);
+                    progressTracker.LogCriticalErrorAndExit($"Coverage calculation failed. Please be sure your tests succeed by default.\n--- test host error output ---\n{errorOutput.Trim()}");
+                }
+                
+                if (Regex.IsMatch(output, @"----> System\.IO\.FileNotFoundException : (.*)netstandard(.*)\n"))
+                {
+                    progressTracker.LogCriticalErrorAndExit("Trying to mutate a .NET Framework project. Faultify currently doesn't support Framework projects.");
                 }
 
+                var failedTestRegex = new Regex(".*Failed (.*) \\[.*");
+                if (failedTestRegex.IsMatch(output))
+                {
+                    List<string> failedTests = new List<string>();
+                    var myCapturedText = failedTestRegex.Matches(output);
+                    foreach (Match item in myCapturedText)
+                    {
+                        failedTests.Add(item.Groups[1].Value);
+                    }
+
+                    progressTracker.LogTestFailedAndExit(failedTests);
+                }
+
+                progressTracker.LogCriticalErrorAndExit($"Subprocess terminated with error code {process.ExitCode}");
+            }
+
+            try
+            {
                 return Utils.ReadMutationCoverageFile();
             }
             catch (FileNotFoundException e)
             {
-                _logger.LogError(e,
-                    "The file 'coverage.bin' was not generated."
+                progressTracker.LogCriticalErrorAndExit("The file 'coverage.bin' was not generated."
                     + "This implies that the test run can not be completed. ");
-            }
-            catch (ExitCodeException e)
-            {
-                _logger.LogError(e, $"Subprocess terminated with error code {e.ExitCode}");
-                
-                Environment.Exit(1);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error running code coverage.");
-            }
 
-            return new MutationCoverage();
+                // The statement above already terminates the program,
+                // but this is so that the compiler wont complain about non-returning code paths.
+                return null;
+            }
         }
 
         /// <summary>

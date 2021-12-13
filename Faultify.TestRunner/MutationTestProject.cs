@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Mime;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -62,6 +63,12 @@ namespace Faultify.TestRunner
             var projectInfo = await BuildProject(progressTracker, _testProjectPath);
             progressTracker.LogEndPreBuilding();
 
+            // Check if the build succeeded
+            if (!File.Exists(projectInfo.AssemblyPath))
+            {
+                progressTracker.LogCriticalErrorAndExit("Couldn't build the unit-testproject. Please check for build errors.");
+            }
+
             // Copy project N times
             progressTracker.LogBeginProjectDuplication(_parallel);
             var testProjectCopier = new TestProjectDuplicator(Directory.GetParent(projectInfo.AssemblyPath).FullName);
@@ -70,17 +77,20 @@ namespace Faultify.TestRunner
             // Begin code coverage on first project.
             var duplicationPool = new TestProjectDuplicationPool(duplications);
             var coverageProject = duplicationPool.TakeTestProject();
-            var coverageProjectInfo = GetTestProjectInfo(coverageProject, projectInfo);
+            var coverageProjectInfo = GetTestProjectInfo(coverageProject, projectInfo, progressTracker);
 
             // Measure the test coverage 
             progressTracker.LogBeginCoverage();
             PrepareAssembliesForCodeCoverage(coverageProjectInfo);
 
-            var coverageTimer = new Stopwatch();
-            coverageTimer.Start();
+            var coverageTimer = Stopwatch.StartNew();
             var coverage = await RunCoverage(progressTracker, coverageProject.TestProjectFile.FullFilePath(), cancellationToken);
-            
             coverageTimer.Stop();
+
+            if (coverage.Coverage.Count <= 0)
+            {
+                progressTracker.LogCriticalErrorAndExit("Found 0 test-coverage, terminating. Either the unit-tests don't test any methods, or something went wrong whilst calculating the coverage.");
+            }
 
             var timeout = _createTimeOut(coverageTimer);
 
@@ -99,7 +109,7 @@ namespace Faultify.TestRunner
         ///     Returns information about the test project.
         /// </summary>
         /// <returns></returns>
-        private TestProjectInfo GetTestProjectInfo(TestProjectDuplication duplication, IProjectInfo testProjectInfo)
+        private TestProjectInfo GetTestProjectInfo(TestProjectDuplication duplication, IProjectInfo testProjectInfo, MutationSessionProgressTracker progressTracker)
         {
             var testFramework = GetTestFramework(testProjectInfo);
 
@@ -113,7 +123,13 @@ namespace Faultify.TestRunner
             // Foreach project reference load it in memory as an 'assembly mutator'.
             foreach (var projectReferencePath in duplication.TestProjectReferences)
             {
-                var loadProjectReferenceModel = new AssemblyMutator(projectReferencePath.FullFilePath());
+                string referencePath = projectReferencePath.FullFilePath();
+                if (!File.Exists(referencePath))
+                {
+                    progressTracker.LogCriticalErrorAndExit($"Couldn't find class library \"{projectReferencePath.Name}\", please check project output settings.");
+                }
+
+                var loadProjectReferenceModel = new AssemblyMutator(referencePath);
 
                 if (loadProjectReferenceModel.Types.Count > 0)
                     projectInfo.DependencyAssemblies.Add(loadProjectReferenceModel);
@@ -215,7 +231,8 @@ namespace Faultify.TestRunner
             catch (Exception e)
             {
                 _testHostLogger.LogError(e, "Unable to create Test Coverage Runner");
-                throw; // TODO: Maybe return null
+                progressTracker.LogCriticalErrorAndExit("Unable to create Test Coverage Runner");
+                return null; // above statment exits the process already
             }
         }
 
@@ -322,7 +339,7 @@ namespace Faultify.TestRunner
                 }
                 finally
                 {
-                    lock (this)
+                    lock (this) // WHY WOULD YOU DO THAT https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/lock-statement#guidelines
                     {
                         completedRuns += 1;
                         sessionProgressTracker.LogTestRunUpdate(completedRuns, totalRunsCount, failedRuns);

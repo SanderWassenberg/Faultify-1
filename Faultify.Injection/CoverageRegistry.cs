@@ -35,7 +35,8 @@ namespace Faultify.Injection
             }
             catch (Exception _)
             {
-                // ignored
+                // Ignored. If we can't write to the coverage file then that's fine for now.
+                // Its content is checked back in the Faultify process.
             }
         }
 
@@ -49,20 +50,13 @@ namespace Faultify.Injection
             {
                 if (!_runningTest) return;
 
-                try
+                if (!MutationCoverage.Coverage.TryGetValue(_currentTest, out var targetHandles))
                 {
-                    if (!MutationCoverage.Coverage.TryGetValue(_currentTest, out var targetHandles))
-                    {
-                        targetHandles = new List<RegisteredCoverage>();
-                        MutationCoverage.Coverage[_currentTest] = targetHandles;
-                    }
+                    targetHandles = new List<RegisteredCoverage>();
+                    MutationCoverage.Coverage[_currentTest] = targetHandles;
+                }
 
-                    targetHandles.Add(new RegisteredCoverage(assemblyName, entityHandle));
-                }
-                catch (Exception _)
-                {
-                    // ignored
-                }
+                targetHandles.Add(new RegisteredCoverage(assemblyName, entityHandle));
             }
         }
 

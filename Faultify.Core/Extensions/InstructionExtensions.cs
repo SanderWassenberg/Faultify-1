@@ -31,8 +31,7 @@ namespace Faultify.Core.Extensions
         {
             try
             {
-                return
-                    instruction.OpCode == OpCodes.Newarr;
+                return instruction.OpCode == OpCodes.Newarr;
             }
             catch
             {

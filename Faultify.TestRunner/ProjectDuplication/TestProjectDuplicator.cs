@@ -38,29 +38,24 @@ namespace Faultify.TestRunner.ProjectDuplication
 
 
             foreach (var file in allFiles)
-                try
+            {
+                var mFile = new FileInfo(file);
+
+                if (mFile.Directory.FullName == newDirInfo.Parent.FullName)
                 {
-                    var mFile = new FileInfo(file);
-
-                    if (mFile.Directory.FullName == newDirInfo.Parent.FullName)
-                    {
-                        var newPath = Path.Combine(newDirInfo.FullName, mFile.Name);
-                        mFile.MoveTo(newPath);
-                    }
-                    else
-                    {
-                        var path = mFile.FullName.Replace(newDirInfo.Parent.FullName, "");
-                        var newPath = new FileInfo(Path.Combine(newDirInfo.FullName, path.Trim('\\')));
-
-                        if (!Directory.Exists(newPath.DirectoryName)) Directory.CreateDirectory(newPath.DirectoryName);
-
-                        mFile.MoveTo(newPath.FullName, true);
-                    }
+                    var newPath = Path.Combine(newDirInfo.FullName, mFile.Name);
+                    mFile.MoveTo(newPath);
                 }
-                catch (Exception e)
+                else
                 {
-                    throw e;
+                    var path = mFile.FullName.Replace(newDirInfo.Parent.FullName, "");
+                    var newPath = new FileInfo(Path.Combine(newDirInfo.FullName, path.Trim('\\')));
+
+                    if (!Directory.Exists(newPath.DirectoryName)) Directory.CreateDirectory(newPath.DirectoryName);
+
+                    mFile.MoveTo(newPath.FullName, true);
                 }
+            }
 
             var initialCopies = testProject.ProjectReferences
                 .Select(x => new FileDuplication(newDirInfo.FullName, Path.GetFileNameWithoutExtension(x) + ".dll"));
