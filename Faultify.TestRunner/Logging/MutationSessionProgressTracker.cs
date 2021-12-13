@@ -79,7 +79,9 @@ namespace Faultify.TestRunner.Logging
             Log("Start Mutation Test Session:\n" +
                 $"| Test Rounds: {totalTestRounds}\n" +
                 $"| Mutations Found: {mutationCount}\n" +
-                $"| Worst Case Time: {totalTestRounds * testRunTime.Seconds}s"
+                $"| Best Case Time: {testRunTime.Seconds}s\n" +
+                $"| Expected Time: {totalTestRounds * testRunTime.Seconds}s\n" +
+                $"| Worst Case Time: {totalTestRounds * testRunTime.Seconds * 2}s"
                 , LogMessageType.MessageBlock
             );
         }
