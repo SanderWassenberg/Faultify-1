@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Faultify.Analyze;
 using Faultify.TestRunner.Logging;
 using Faultify.TestRunner.ProjectDuplication;
+using Microsoft.Build.Execution;
 using Microsoft.Extensions.Logging;
 
 namespace Faultify.TestRunner.TestRun
@@ -105,7 +108,32 @@ namespace Faultify.TestRunner.TestRun
                 mutationVariant.Mutation?.Reset();
             }
 
-            testProject.FlushMutations(_mutationVariants);
+            #region Temp solution
+            // NOTE: this is by no means beautiful code, but this is Faultify, lets be real
+            bool succeeded = false;
+            var count = 0;
+            while (!succeeded)
+            {
+                try
+                {
+                    testProject.FlushMutations(_mutationVariants);
+                    succeeded = true;
+                }
+                catch (IOException)
+                {
+                    // If we cant access the C# project dll, wait until the dll is freed
+                    count++;
+                    if (count <= 20)
+                    {
+                        Thread.Sleep(2000);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
+            #endregion
         }
     }
 }
