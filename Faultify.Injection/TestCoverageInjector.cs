@@ -163,6 +163,7 @@ namespace Faultify.Injection
             {
                 var testMethods = typeDefinition.Methods.Where(m =>
                     m.HasCustomAttributes && m.CustomAttributes.Any(x =>
+                        x.AttributeType.Name == "TestCaseAttribute" ||
                         x.AttributeType.Name == "TestAttribute" ||
                         x.AttributeType.Name == "TestMethodAttribute" ||
                         x.AttributeType.Name == "FactAttribute"));
