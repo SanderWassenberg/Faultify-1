@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
@@ -25,6 +26,7 @@ namespace Faultify.TestRunner.Shared
             {
                 binaryWriter.Write(testResult.Name);
                 binaryWriter.Write((int)testResult.Outcome);
+                binaryWriter.Write(testResult.Guid.ToByteArray());
             }
 
             return memoryStream.ToArray();
@@ -40,9 +42,13 @@ namespace Faultify.TestRunner.Shared
             {
                 var testResult = new TestResult();
                 var name = binaryReader.ReadString();
-                var testOutcome = (TestOutcome)binaryReader.ReadInt32();
+                var testOutcome = (TestOutcome)binaryReader.ReadInt32(); 
+                var guidBytes = new byte[16];
+                binaryReader.Read(guidBytes, 0, guidBytes.Length);
+
                 testResult.Name = trimNames ? name.Split('(')[0] : name;
                 testResult.Outcome = testOutcome;
+                testResult.Guid = new Guid(guidBytes);
                 testResults.Tests.Add(testResult);
             }
 

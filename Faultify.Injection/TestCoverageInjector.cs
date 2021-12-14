@@ -163,23 +163,30 @@ namespace Faultify.Injection
             {
                 var testMethods = typeDefinition.Methods.Where(m =>
                     m.HasCustomAttributes && m.CustomAttributes.Any(x =>
+                        // XUnit attributes
+                        x.AttributeType.Name == "FactAttribute" ||
+                        x.AttributeType.Name == "TheoryAttribute" ||
+                        // NUnit attributes
                         x.AttributeType.Name == "TestCaseAttribute" ||
                         x.AttributeType.Name == "TestAttribute" ||
+                        x.AttributeType.Name == "CombinatorialAttribute" ||
+                        x.AttributeType.Name == "PairWiseAttribute" ||
+                        // MSTest attributes
                         x.AttributeType.Name == "TestMethodAttribute" ||
-                        x.AttributeType.Name == "FactAttribute"));
+                        x.AttributeType.Name == "DataTestMethodAttribute"));
 
                 foreach (var method in testMethods)
                 {
                     if (method.Body == null) continue;
 
                     var processor = method.Body.GetILProcessor();
-                    
+
                     // The string with which the register-method identifies the current test.
                     Instruction entityHandleInstruction = processor.Create(OpCodes.Ldstr, method.DeclaringType.FullName + "." + method.Name);
 
                     // The register methods.
                     Instruction beginRegisterInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_beginRegisterTestCoverage));
-                    Instruction endRegisterInstruction =   processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
+                    Instruction endRegisterInstruction = processor.Create(OpCodes.Call, method.Module.ImportReference(_endRegisterTestCoverage));
 
                     // Insert the method signaling the start of a test, insert at index 0.
                     method.Body.Instructions.Insert(0, beginRegisterInstruction); // method call
