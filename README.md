@@ -44,13 +44,13 @@ This generates a 'HTML' report for the project 'YourTestProject.csproj' at the d
 
 **Functional Features**
 - [X] Mutate Arithmetic (+, -, /, *, %) Operators.
-- [X] Mutate Assignment Expressions (+=, -=, /=, *=, %=, --, ++).
-- [X] Mutate Equivalence Operators (==, !=).
-- [X] Mutate Logical Operators (&&, ||).
-- [X] Change bitwise operators (^,|, &).
-- [X] Mutate Branching statements (if(condition), if(!condition))
-- [X] Mutate Variable Literals (true, false).
-     - [X] Support for other types.
+- [ ] Mutate Assignment Expressions (+=, -=, /=, *=, %=, --, ++).
+- [ ] Mutate Equivalence Operators (==, !=).
+- [ ] Mutate Logical Operators (&&, ||).
+- [ ] Change bitwise operators (^,|, &).
+- [ ] Mutate Branching statements (if(condition), if(!condition))
+- [ ] Mutate Variable Literals (true, false).
+     - [ ] Support for other types.
 - [X] Mutate Constant Fields (string, number, boolean).
 - [X] Mutate Array initializations (Only arrays larger than 2 elements, all C# types)
 - [X] Build mutation report (HTML/PDF).
