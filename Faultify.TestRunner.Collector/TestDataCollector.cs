@@ -59,19 +59,29 @@ namespace Faultify.TestRunner.Collector
 
         private void EventsOnTestCaseStart(object sender, TestCaseStartEventArgs e)
         {
+            // if there is a parameterized test that is exactly the same as another test, only add the first
+            if (_testResults.Tests.Any(t => t.Guid == e.TestElement.Id))
+            {
+                _logger.LogWarning(context.SessionDataCollectionContext, $"Detected multiple test cases with the same guid ({e.TestElement.Id}) for test '{e.TestElement.FullyQualifiedName}'. Skipping test");
+                return;
+            }
+            
             _logger.LogWarning(context.SessionDataCollectionContext, $"Test Case Start: {e.TestCaseName}");
 
             // Register this test because there is a possibility for the test host to crash before the end event. 
             _testResults.Tests.Add(new TestResult
-                { Outcome = TestOutcome.None, Name = e.TestElement.FullyQualifiedName });
+            {
+                Outcome = TestOutcome.None,
+                Name = e.TestElement.FullyQualifiedName,
+                Guid = e.TestElement.Id
+            });
         }
 
         private void EventsOnTestCaseEnd(object sender, TestCaseEndEventArgs e)
         {
             _logger.LogWarning(context.SessionDataCollectionContext, $"Test Case End: {e.TestCaseName}");
-
             // Find the test and set the correct test outcome.
-            var test = _testResults.Tests.FirstOrDefault(x => x.Name == e.TestElement.FullyQualifiedName);
+            var test = _testResults.Tests.FirstOrDefault(x => x.Guid == e.TestElement.Id);
 
             if (test == null)
             {

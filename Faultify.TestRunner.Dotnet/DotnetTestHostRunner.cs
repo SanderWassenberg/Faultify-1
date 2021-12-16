@@ -65,7 +65,7 @@ namespace Faultify.TestRunner.Dotnet
                     var testResultsBinary = await File.ReadAllBytesAsync(testResultOutputPath,
                         new CancellationTokenSource(timeout).Token);
 
-                    var deserializedTestResults = TestResults.Deserialize(testResultsBinary);
+                    var deserializedTestResults = TestResults.Deserialize(testResultsBinary, true);
 
                     remainingTests.RemoveWhere(x => deserializedTestResults.Tests.Any(y => y.Name == x));
 

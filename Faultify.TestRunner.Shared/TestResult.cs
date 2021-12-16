@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+﻿using System;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace Faultify.TestRunner.Shared
 {
@@ -6,5 +7,6 @@ namespace Faultify.TestRunner.Shared
     {
         public string Name { get; set; }
         public TestOutcome Outcome { get; set; }
+        public Guid Guid { get; set; }
     }
 }

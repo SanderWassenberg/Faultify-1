@@ -39,9 +39,13 @@ namespace Faultify.TestRunner
                     }
 
                     // get all the tests that cover a mutation
-                    var allTestsForMutation = mutation.MutationIdentifier.TestCoverage
-                        .Select(testName => testResults.Tests.Find(t => t.Name == testName))
-                        .ToList();
+                    var allTestsForMutation = new List<TestResult>();
+                    foreach (var testNameInCoverage in mutation.MutationIdentifier.TestCoverage)
+                    {
+                        // FindAll instead of Find because NUnit TestCases (or XUnit/MSTest equivalent) have the same name, they need to all be included.
+                        var matchingTestResults = testResults.Tests.FindAll(t => t.Name == testNameInCoverage);
+                        allTestsForMutation.AddRange(matchingTestResults);
+                    }
 
                     // if there are no tests covering the mutation, mark it with no coverage
                     // otherwise, determine the success based on the outcome of the tests

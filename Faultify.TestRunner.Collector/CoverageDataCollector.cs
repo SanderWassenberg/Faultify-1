@@ -8,20 +8,12 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection;
 namespace Faultify.TestRunner.Collector
 {
     /// <summary>
-    ///     Collects test methods that ran in a test session.
-    ///     The collected methods will be used as filter for methods that were registered into
-    ///     `Faultify.Injection.CoverageRegistry.RegisterTestCoverage()`/>
+    ///     Logs information as the coverage is being calculated.
     /// </summary>
     [DataCollectorFriendlyName("CoverageDataCollector")]
     [DataCollectorTypeUri("my://coverage/datacollector")]
     public class CoverageDataCollector : DataCollector
     {
-        /// <summary>
-        ///     Collection with all tests that ran in the test session.
-        /// </summary>
-        private readonly HashSet<string> _testNames = new HashSet<string>();
-
-        private bool _coverageFlushed;
         private DataCollectionLogger _logger;
         private DataCollectionEnvironmentContext context;
 
@@ -59,26 +51,6 @@ namespace Faultify.TestRunner.Collector
 
         private void EventsOnSessionEnd(object sender, SessionEndEventArgs e)
         {
-            try
-            {
-                if (_coverageFlushed) return;
-
-                var mutationCoverage = Utils.ReadMutationCoverageFile();
-
-                // Filter out functions that are not tests
-                mutationCoverage.Coverage = mutationCoverage.Coverage
-                    .Where(pair => _testNames.Contains(pair.Key))
-                    .ToDictionary(pair => pair.Key, pair => pair.Value);
-
-                Utils.WriteMutationCoverageFile(mutationCoverage);
-
-                _coverageFlushed = true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(context.SessionDataCollectionContext, $"Test Session Exception: {ex}");
-            }
-
             _logger.LogWarning(context.SessionDataCollectionContext, "Coverage Test Session Finished");
         }
 
@@ -90,7 +62,6 @@ namespace Faultify.TestRunner.Collector
         private void EventsOnTestCaseEnd(object sender, TestCaseEndEventArgs e)
         {
             _logger.LogWarning(context.SessionDataCollectionContext, $"Test Case End: {e.TestCaseName}");
-            _testNames.Add(e.TestElement.FullyQualifiedName);
         }
     }
 }
