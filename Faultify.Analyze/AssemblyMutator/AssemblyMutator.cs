@@ -122,7 +122,7 @@ namespace Faultify.Analyze.AssemblyMutator
             return Module.Types
                 .Where(type => !type.FullName.StartsWith("<"))
                 .Select(type => new FaultifyTypeDefinition(type, OpCodeMethodAnalyzers, FieldAnalyzers,
-                    VariableMutationAnalyzers, ArrayMutationAnalyzers))
+                    VariableMutationAnalyzers, ArrayMutationAnalyzers, ListMutationAnalyzers))
                 .ToList();
         }
 

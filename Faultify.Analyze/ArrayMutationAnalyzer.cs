@@ -42,16 +42,16 @@ namespace Faultify.Analyze
             IDictionary<Instruction, SequencePoint> debug = null)
         {
             List<ArrayMutation> mutations = new List<ArrayMutation>();
-             foreach (var instruction in method.Body.Instructions)
+            foreach (var instruction in method.Body.Instructions)
                 // Call the corresponding strategy based on the result
-                 if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
-                 {
-                     //Add all possible or desired strategies to the mutation list
-                     mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
-                     mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
-                 }
+                if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
+                {
+                    //Add all possible or desired strategies to the mutation list
+                    mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
+                    mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
+                }
 
-             return mutations;
+            return mutations;
         }
 
         /// <summary>
