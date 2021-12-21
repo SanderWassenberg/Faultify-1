@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Faultify.Analyze.Mutation;
 using Faultify.Analyze.Strategies;
+using Faultify.Core.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -22,10 +23,10 @@ namespace Faultify.Analyze
             foreach (var instruction in method.Body.Instructions)
             {
                 // Call the corresponding strategy based on the result
-                if (false /* how to detect a list */)
+                if (instruction.IsList() /* how to detect a list */)
                 {
                     //Add all possible or desired strategies to the mutation list
-                    mutations.Add(new ListMutation(new EmptyListStrategy(), method));
+                    mutations.Add(new ListMutation(new EmptyListStrategy(method), method));
                 }
             }
 

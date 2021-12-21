@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -43,7 +44,8 @@ namespace Faultify.Core.Extensions
         {
             try
             {
-                return instruction.OpCode == OpCodes.Newobj;
+                MethodReference methodInfo = instruction.Operand as MethodReference;
+                return instruction.OpCode == OpCodes.Newobj && methodInfo.DeclaringType.GetElementType().FullName == typeof(List<>).FullName;
                 // moet nog andere checks doen, alleen obj is niet genoeg
             }
             catch

@@ -26,9 +26,7 @@ namespace Faultify.Analyze.Mutation
 
         public void Mutate()
         {
-            Console.WriteLine("ListMutation!");
-            Environment.Exit(1);
-            throw new NotImplementedException();
+            _mutationStrategy.Mutate();
         }
 
         public void Reset()
