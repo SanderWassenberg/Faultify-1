@@ -39,6 +39,19 @@ namespace Faultify.Core.Extensions
             }
         }
 
+        public static bool IsList(this Instruction instruction)
+        {
+            try
+            {
+                return instruction.OpCode == OpCodes.Newobj;
+                // moet nog andere checks doen, alleen obj is niet genoeg
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static Type ToSystemType(this TypeReference typeRef)
         {
             return Type.GetType(typeRef.FullName);
