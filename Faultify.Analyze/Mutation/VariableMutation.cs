@@ -1,4 +1,5 @@
-﻿using Mono.Cecil.Cil;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace Faultify.Analyze.Mutation
 {
@@ -19,6 +20,8 @@ namespace Faultify.Analyze.Mutation
         /// </summary>
         public Instruction Variable { get; set; }
 
+        public string Location { get; set; }
+
         public int LineNumber { get; set; }
 
         public void Mutate()
@@ -36,7 +39,7 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change variable from: '{Original}' to '{Replacement}'";
+                    return $"Change variable from: '{Original}' to '{Replacement}' at location: {Location}";
 
                 return $"Change variable from: '{Original}' to '{Replacement}' at line {LineNumber}";
             }

@@ -77,7 +77,8 @@ namespace Faultify.Analyze
                                 Original = variableInstruction.Operand,
                                 Replacement = _valueGenerator.GenerateValueForField(type, instruction.Previous.Operand),
                                 Variable = variableInstruction,
-                                LineNumber = lineNumber
+                                LineNumber = lineNumber,
+                                Location = method.FullName.Split(' ').Last(),
                             });
                 }
                 catch (InvalidCastException e)

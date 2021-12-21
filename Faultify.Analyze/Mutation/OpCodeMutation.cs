@@ -22,6 +22,8 @@ namespace Faultify.Analyze.Mutation
         /// </summary>
         public Instruction Instruction { get; set; }
 
+        public string Location { get; set; }
+
         public int LineNumber { get; set; }
 
         public void Mutate()
@@ -39,7 +41,7 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change operator from: '{Original}' to '{Replacement}'";
+                    return $"Change operator from: '{Original}' to '{Replacement}' at location: {Location}";
 
                 return $"Change operator from: '{Original}' to '{Replacement}' at line {LineNumber}";
             }
