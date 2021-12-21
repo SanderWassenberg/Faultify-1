@@ -1,5 +1,7 @@
-﻿using Mono.Cecil;
+﻿using Faultify.Core.Extensions;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,30 +26,32 @@ namespace Faultify.Analyze.Strategies
         public void Mutate()
         {
             var processor = _methodDefinition.Body.GetILProcessor();
-
-            var startList = new List<Instruction>();
-            var endList = new List<Instruction>();
+            _methodDefinition.Body.SimplifyMacros();
 
             var currentInstruction = _methodDefinition.Body.Instructions[0];
 
             // add the instructions to be run after the values have been set
             while (currentInstruction != null)
             {
-                endList.Add(currentInstruction);
+                if (currentInstruction.IsList())
+                    break;
                 currentInstruction = currentInstruction.Next;
             }
 
-            // remove all the instructions
-            processor.Clear();
+            currentInstruction = currentInstruction.Next;
 
-            // append new list instructions to processor
-            foreach (var start in startList) processor.Append(start);
+            while (currentInstruction != null)
+            {
+                if (currentInstruction.OpCode == OpCodes.Stloc)
+                    break;
+                var deleteInstruction = currentInstruction;
+                currentInstruction = currentInstruction.Next;
+                processor.Body.Instructions.Remove(deleteInstruction);
+            }
 
-            // append after array instructions to processor
-            foreach (var end in endList) processor.Append(end);
+            var test = processor.Body.Instructions;
 
-            Console.WriteLine("ListMutation!");
-            Environment.Exit(1);
+            _methodDefinition.Body.OptimizeMacros();
         }
     }
 }
