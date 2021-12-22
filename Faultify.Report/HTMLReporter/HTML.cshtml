@@ -95,7 +95,7 @@
                                     <div class="card-header" id="headingmutatie@(i)@(y)" style="padding: 0%;">
                                         <h5 class="mb-0">
                                             <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapsemutatie@(i)@(y)" aria-expanded="true" aria-controls="collapsemutatie@(i)@(y)" style="color: #6e798a; height: 100%; text-align: left; width: 100%;">
-                                                @mutation.Name -
+                                                @mutation.Name
                                                 @if (mutation.TestStatus == MutationStatus.Killed)
                                                 {
                                                     <label class="text-success" style="float: right;">Killed</label>
@@ -119,6 +119,17 @@
                                     <div id="collapsemutatie@(i)@(y)" class="collapse" aria-labelledby="headingmutatie@(i)@(y)" data-parent="#collapsemutatie@(i)@(y)">
                                         <div class="card-body">
                                             @mutation.Description
+
+                                            @if (mutation.FailedTests.Count != 0)
+                                            {
+                                                <h6>Corresponding Tests</h6>
+                                                <ul>
+                                                    @foreach (var test in mutation.FailedTests)
+                                                    {
+                                                        <li>@test</li>
+                                                    }
+                                                </ul>
+                                            }
 
                                             <h6>Original Source</h6>
                                             <pre><code class="language-csharp">@mutation.OriginalSource</code></pre>

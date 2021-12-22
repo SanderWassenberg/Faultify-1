@@ -62,7 +62,8 @@ namespace Faultify.TestRunner
                         mutation.OriginalSource,
                         mutation.MutatedSource,
                         mutation.MutationIdentifier.MutationId,
-                        mutation.MutationIdentifier.MemberName
+                        mutation.MutationIdentifier.MemberName,
+                        mutationStatus == MutationStatus.Survived ? allTestsForMutation.Select(x => x.Name).ToList() : new List<string>()
                     ));
                 }
             }
