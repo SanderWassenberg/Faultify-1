@@ -22,6 +22,8 @@ namespace Faultify.Analyze.Mutation
         /// </summary>
         public Instruction Instruction { get; set; }
 
+        public string Location { get; set; }
+
         public int LineNumber { get; set; }
 
         public void Mutate()
@@ -34,14 +36,36 @@ namespace Faultify.Analyze.Mutation
             Instruction.OpCode = Original;
         }
 
+        private string GetOpCodeName(OpCode opcode)
+        {
+            string name = opcode.Name switch
+            {
+                "add" => "+",
+                "sub" => "-",
+                "mul" => "*",
+                "div" => "/",
+                "rem" => "%",
+                "or" => "|",
+                "and" => "&",
+                "xor" => "^",
+                "ceq" => "==",
+                "clt" => "<",
+                "cgt" => ">",
+                "shl" => "<<",
+                "shr" => ">>",
+                _ => throw new System.NotImplementedException()
+            };
+            return name;
+        }
+
         public string Report
         {
             get
             {
                 if (LineNumber == -1)
-                    return $"Change operator from: '{Original}' to '{Replacement}'";
+                    return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at location: {Location}";
 
-                return $"Change operator from: '{Original}' to '{Replacement}' at line {LineNumber}";
+                return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at location: {Location} at line {LineNumber}";
             }
         }
     }

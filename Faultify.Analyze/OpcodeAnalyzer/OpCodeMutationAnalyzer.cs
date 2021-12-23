@@ -48,7 +48,10 @@ namespace Faultify.Analyze.OpcodeAnalyzer
                     .Where(mutant => mutationLevel.HasFlag(mutant.Item1))
                     .Select(mutant => new OpCodeMutation
                     {
-                        Original = original, Replacement = mutant.Item2, Instruction = scope, LineNumber = lineNumber
+                        Original = original, 
+                        Replacement = mutant.Item2, 
+                        Instruction = scope, 
+                        LineNumber = lineNumber
                     })
                 : Enumerable.Empty<OpCodeMutation>();
         }
