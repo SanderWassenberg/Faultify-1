@@ -51,6 +51,13 @@ namespace Faultify.TestRunner
                     // otherwise, determine the success based on the outcome of the tests
                     var mutationStatus = allTestsForMutation.Count == 0 ? MutationStatus.NoCoverage : GetMutationStatus(allTestsForMutation);
 
+                    // Find the linenumber where the mutation happened so that the ShortenMethodstring method knows where to cut the strings short
+                    int mutationLineNumber = GetMutationLinenumber(mutation.OriginalSource, mutation.MutatedSource);
+
+                    // Shorten the original and mutated method strings so the report doesn't become clogged up by huge methods
+                    var shortenedOriginal = ShortenMethodString(mutation.OriginalSource, mutationLineNumber);
+                    var shortenedMutation = ShortenMethodString(mutation.MutatedSource, mutationLineNumber);
+
                     // Adds a highlight (comment) to the orignal and mutated source
                     var mutationHighlighted = HighlightMutation(mutation);
 
@@ -62,14 +69,45 @@ namespace Faultify.TestRunner
                             mutation.MutationAnalyzerInfo.AnalyzerDescription),
                         mutationStatus,
                         testRunDuration,
-                        mutationHighlighted.OriginalSource,
-                        mutationHighlighted.MutatedSource,
+                        shortenedOriginal,
+                        shortenedMutation,
                         mutation.MutationIdentifier.MutationId,
                         mutation.MutationIdentifier.MemberName,
                         mutationStatus == MutationStatus.Survived ? allTestsForMutation.Select(x => x.Name).ToList() : new List<string>()
                     ));
                 }
             }
+        }
+
+        private int GetMutationLinenumber(string original, string mutation)
+        {
+            return original.Zip(mutation, (c1, c2) => c1 == c2).TakeWhile(b => b).Count() + 1;
+        }
+
+        private string ShortenMethodString(string method, int lineNumber)
+        {
+            int counter = 0;
+            int index = lineNumber;
+            int lastIndex = lineNumber;
+
+            while (counter < 3 && (index = method.IndexOf("\r\n", index + 1)) != -1)
+            {
+                counter++;
+            }
+
+            counter = 0;
+
+            while (counter < 3 && (lastIndex = method.LastIndexOf("\r\n", lastIndex - 1)) != -1)
+            {
+                counter++;
+            }
+
+            if (index != -1 && lastIndex != -1)
+            {
+                method = method.Substring(lastIndex, (index - lastIndex));
+            }
+
+            return method;
         }
 
         public TestProjectReportModel Build(TimeSpan testDuration, int totalTestRuns)
