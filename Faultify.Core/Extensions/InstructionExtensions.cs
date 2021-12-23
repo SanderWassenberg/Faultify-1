@@ -40,13 +40,13 @@ namespace Faultify.Core.Extensions
             }
         }
 
-        public static bool IsList(this Instruction instruction)
+        public static bool IsListInitialiser(this Instruction instruction)
         {
             try
             {
-                MethodReference methodInfo = instruction.Operand as MethodReference;
-                return instruction.OpCode == OpCodes.Newobj && methodInfo.DeclaringType.GetElementType().FullName == typeof(List<>).FullName;
-                // moet nog andere checks doen, alleen obj is niet genoeg
+                return instruction.OpCode.Code == Code.Newobj 
+                    && ((MethodReference)instruction.Operand).DeclaringType.GetElementType().FullName == typeof(List<>).FullName 
+                    && instruction.Next.OpCode.Code == Code.Dup;
             }
             catch
             {

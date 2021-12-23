@@ -22,8 +22,7 @@ namespace Faultify.Analyze
             List<ListMutation> mutations = new List<ListMutation>();
             foreach (var instruction in method.Body.Instructions)
             {
-                // Call the corresponding strategy based on the result
-                if (instruction.IsList() /* how to detect a list */)
+                if (instruction.IsListInitialiser())
                 {
                     //Add all possible or desired strategies to the mutation list
                     mutations.Add(new ListMutation(new EmptyListStrategy(method), method));
