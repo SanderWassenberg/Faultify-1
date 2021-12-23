@@ -51,6 +51,9 @@ namespace Faultify.TestRunner
                     // otherwise, determine the success based on the outcome of the tests
                     var mutationStatus = allTestsForMutation.Count == 0 ? MutationStatus.NoCoverage : GetMutationStatus(allTestsForMutation);
 
+                    // Adds a highlight (comment) to the orignal and mutated source
+                    var mutationHighlighted = HighlightMutation(mutation);
+
                     // Add mutation to the report
                     _testProjectReportModel.Mutations.Add(new MutationVariantReportModel(
                         mutation.Mutation.Report, "",
@@ -59,8 +62,8 @@ namespace Faultify.TestRunner
                             mutation.MutationAnalyzerInfo.AnalyzerDescription),
                         mutationStatus,
                         testRunDuration,
-                        mutation.OriginalSource,
-                        mutation.MutatedSource,
+                        mutationHighlighted.OriginalSource,
+                        mutationHighlighted.MutatedSource,
                         mutation.MutationIdentifier.MutationId,
                         mutation.MutationIdentifier.MemberName,
                         mutationStatus == MutationStatus.Survived ? allTestsForMutation.Select(x => x.Name).ToList() : new List<string>()
@@ -85,6 +88,19 @@ namespace Faultify.TestRunner
 
             // any other outcome is being marked as a timeout 
             return MutationStatus.Timeout;
+        }
+
+        private MutationVariant HighlightMutation(MutationVariant mutation)
+        {
+            // Gets the index of the mutation
+            int mutationIndex = mutation.OriginalSource.Zip(mutation.MutatedSource, (c1, c2) => c1 == c2).TakeWhile(b => b).Count() + 1;
+
+            // Gets the index of the last occurrence of \r\n starting from the mutationIndex and going backwards
+            int insertIndex = mutation.OriginalSource.LastIndexOf("\r\n", mutationIndex);
+            mutation.OriginalSource = mutation.OriginalSource.Insert(insertIndex, "\r\n//This will be mutated");
+            mutation.MutatedSource = mutation.MutatedSource.Insert(insertIndex, "\r\n//This is the mutation");
+
+            return mutation;
         }
     }
 }
