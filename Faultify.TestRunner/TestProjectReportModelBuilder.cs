@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Faultify.Report;
 using Faultify.TestRunner.Shared;
 using Faultify.TestRunner.TestRun;
@@ -52,14 +53,14 @@ namespace Faultify.TestRunner
                     var mutationStatus = allTestsForMutation.Count == 0 ? MutationStatus.NoCoverage : GetMutationStatus(allTestsForMutation);
 
                     // Find the linenumber where the mutation happened so that the ShortenMethodstring method knows where to cut the strings short
-                    int mutationLineNumber = GetMutationLinenumber(mutation.OriginalSource, mutation.MutatedSource);
-
-                    // Shorten the original and mutated method strings so the report doesn't become clogged up by huge methods
-                    var shortenedOriginal = ShortenMethodString(mutation.OriginalSource, mutationLineNumber);
-                    var shortenedMutation = ShortenMethodString(mutation.MutatedSource, mutationLineNumber);
+                    int mutationLineNumber = mutation.OriginalSource.Zip(mutation.MutatedSource, (c1, c2) => c1 == c2).TakeWhile(b => b).Count() + 1;
 
                     // Adds a highlight (comment) to the orignal and mutated source
                     var mutationHighlighted = HighlightMutation(mutation);
+                    
+                    // Shorten the original and mutated method strings so the report doesn't become clogged up by huge methods
+                    var shortenedOriginal = ShortenMethodString(mutationHighlighted.OriginalSource, mutationLineNumber);
+                    var shortenedMutation = ShortenMethodString(mutationHighlighted.MutatedSource, mutationLineNumber);
 
                     // Add mutation to the report
                     _testProjectReportModel.Mutations.Add(new MutationVariantReportModel(
@@ -79,35 +80,60 @@ namespace Faultify.TestRunner
             }
         }
 
-        private int GetMutationLinenumber(string original, string mutation)
-        {
-            return original.Zip(mutation, (c1, c2) => c1 == c2).TakeWhile(b => b).Count() + 1;
-        }
-
         private string ShortenMethodString(string method, int lineNumber)
         {
+            StringBuilder stringBuilder = new StringBuilder();
+
             int counter = 0;
             int index = lineNumber;
             int lastIndex = lineNumber;
 
-            while (counter < 3 && (index = method.IndexOf("\r\n", index + 1)) != -1)
+            while (counter < 5 && (index = method.IndexOf("\r\n\t", index + 1)) != -1)
             {
                 counter++;
             }
 
             counter = 0;
-
-            while (counter < 3 && (lastIndex = method.LastIndexOf("\r\n", lastIndex - 1)) != -1)
+            while (counter < 5 && (lastIndex = method.LastIndexOf("\r\n\t", lastIndex - 1)) != -1)
             {
                 counter++;
             }
 
-            if (index != -1 && lastIndex != -1)
+            // Short method 
+            if (index == -1 && lastIndex == -1)
             {
-                method = method.Substring(lastIndex, (index - lastIndex));
+                return method;
             }
 
-            return method;
+            // Both sides are too long
+            if (index != -1 && lastIndex != -1)
+            {
+                int temp = method.IndexOf("{");
+                stringBuilder.Append(method.Substring(0, temp));
+
+                if (!method[lastIndex].ToString().Equals("{"))
+                {
+                    stringBuilder.Append("{");
+                }
+
+                stringBuilder.Append(method.Substring(lastIndex, (index - lastIndex)));
+                stringBuilder.Append("\r\n}");
+            }
+            // only the right side is too long
+            else if (index != -1)
+            {
+                stringBuilder.Append(method.Substring(0, index));
+                stringBuilder.Append("\r\n}");
+            }
+            // only the left side is too long
+            else
+            {
+                int temp = method.IndexOf("{");
+                stringBuilder.Append(method.Substring(0, temp + 1));
+                stringBuilder.Append(method.Substring(lastIndex, method.Length - lastIndex));
+            } 
+
+            return stringBuilder.ToString();
         }
 
         public TestProjectReportModel Build(TimeSpan testDuration, int totalTestRuns)
