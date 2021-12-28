@@ -165,6 +165,9 @@ namespace Faultify.TestRunner
 
             // Gets the index of the last occurrence of \r\n starting from the mutationIndex and going backwards
             int insertIndex = mutation.OriginalSource.LastIndexOf("\r\n", mutationIndex);
+
+            if (insertIndex < 0) return mutation;
+
             mutation.OriginalSource = mutation.OriginalSource.Insert(insertIndex, "\r\n//This will be mutated");
             mutation.MutatedSource = mutation.MutatedSource.Insert(insertIndex, "\r\n//This is the mutation");
 
