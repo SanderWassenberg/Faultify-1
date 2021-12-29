@@ -10,7 +10,10 @@ using System.Threading.Tasks;
 using Faultify.TestRunner.Logging;
 using Faultify.TestRunner.Shared;
 using Faultify.TestRunner.TestProcess;
+using Faultify.TestRunner.TestRun;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using TestResult = Faultify.TestRunner.Shared.TestResult;
 
 namespace Faultify.TestRunner.Dotnet
 {
@@ -46,7 +49,7 @@ namespace Faultify.TestRunner.Dotnet
         /// <param name="tests"></param>
         /// <returns></returns>
         public async Task<TestResults> RunTests(TimeSpan timeout, IProgress<string> progress,
-            IEnumerable<string> tests)
+            IEnumerable<string> tests, IList<MutationVariant> mutationVariants)
         {
             var testResultOutputPath = Path.Combine(_testDirectoryInfo.FullName, TestRunnerConstants.TestsFileName);
 
@@ -67,9 +70,29 @@ namespace Faultify.TestRunner.Dotnet
 
                     var deserializedTestResults = TestResults.Deserialize(testResultsBinary, true);
 
-                    remainingTests.RemoveWhere(x => deserializedTestResults.Tests.Any(y => y.Name == x));
+                    if (deserializedTestResults.Tests[0].Outcome == TestOutcome.None)
+                    {
+                        foreach (var variant in mutationVariants)
+                        {
+                            if (variant.MutationIdentifier.TestCoverage.Contains(deserializedTestResults.Tests[0].Name))
+                            {
+                                foreach (var test in variant.MutationIdentifier.TestCoverage)
+                                {
+                                    testResults.Add(new TestResult(){Guid = Guid.NewGuid(), Name = test, Outcome = TestOutcome.None});
+                                    remainingTests.Remove(test);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        remainingTests.RemoveWhere(x => deserializedTestResults.Tests.Any(y => y.Name == x));
 
-                    foreach (var testResult in deserializedTestResults.Tests) testResults.Add(testResult);
+                        foreach (var testResult in deserializedTestResults.Tests) testResults.Add(testResult);
+                    }
+
+
+                    
                 }
                 catch (FileNotFoundException)
                 {
