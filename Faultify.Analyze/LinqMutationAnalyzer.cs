@@ -1,35 +1,19 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
 using Faultify.Analyze.Mutation;
-using Faultify.Core.Extensions;
-using ICSharpCode.Decompiler.TypeSystem;
-using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
-using MonoMod.Utils;
-using GenericParameter = Mono.Cecil.GenericParameter;
 using MethodDefinition = Mono.Cecil.MethodDefinition;
 using ModuleDefinition = Mono.Cecil.ModuleDefinition;
 using OpCodes = Mono.Cecil.Cil.OpCodes;
 using SequencePoint = Mono.Cecil.Cil.SequencePoint;
-using TypeDefinition = Mono.Cecil.TypeDefinition;
 using TypeReference = Mono.Cecil.TypeReference;
 
 namespace Faultify.Analyze
 {
     /// <summary>
-    ///     Analyzer that searches for possible Linq mutations such as 'Last()' to 'First()'."
+    ///     Analyzer that searches for possible LINQ mutations such as 'Last()' to 'First()'."
     /// </summary>
     public class LinqMutationAnalyzer : IMutationAnalyzer<LinqMutation, MethodDefinition>
     {
@@ -103,11 +87,12 @@ namespace Faultify.Analyze
                     var replacementMethod = typeof(Enumerable).GetMethods().FirstOrDefault(m => m.Name == newMethodName &&
                         m.IsGenericMethodDefinition && ParametersAreEqual(originalParameters, m.GetParameters()));
                     
-                    // If the specified linq method could not be found, we probably want to log a error and skip the instruction
-                    // for now, assert the linq method can always be found
+                    // If the specified linq method could not be found, log an error and skip the instruction
                     if (replacementMethod == null)
                     {
-                        // TODO handle what to do if the linq method could not be found (also change comment above)
+                        // TODO once logging has been made global, log the following message:
+                        var errorMessage = $"The specified LINQ method ('{newMethodName}') could not be found with the same parameters of the original method." +
+                                           $" This could be due to a change in the LINQ library";
                         continue;
                     }
 
