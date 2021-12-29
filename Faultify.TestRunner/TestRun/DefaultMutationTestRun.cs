@@ -35,7 +35,7 @@ namespace Faultify.TestRunner.TestRun
                 timeout, logger);
 
             var testResults =
-                await testRunner.RunTests(timeout, sessionProgressTracker, runningTests);
+                await testRunner.RunTests(timeout, sessionProgressTracker, runningTests, _mutationVariants);
 
             ResetMutations(testProject);
 

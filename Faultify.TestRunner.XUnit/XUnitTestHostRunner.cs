@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Faultify.MemoryTest.TestInformation;
 using Faultify.TestRunner.Logging;
 using Faultify.TestRunner.Shared;
+using Faultify.TestRunner.TestRun;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using TestResult = Faultify.TestRunner.Shared.TestResult;
@@ -25,7 +26,7 @@ namespace Faultify.TestRunner.XUnit
 
         public TestFramework TestFramework => TestFramework.XUnit;
 
-        public async Task<TestResults> RunTests(TimeSpan timeout, IProgress<string> progress, IEnumerable<string> tests)
+        public async Task<TestResults> RunTests(TimeSpan timeout, IProgress<string> progress, IEnumerable<string> tests, IList<MutationVariant> variants)
         {
             var hashedTests = new HashSet<string>(tests);
 
