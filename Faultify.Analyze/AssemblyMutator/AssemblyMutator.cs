@@ -20,6 +20,7 @@ namespace Faultify.Analyze.AssemblyMutator
     ///     - ConstantAnalyzers(<see cref="VariableMutationAnalyzer" />)<br />
     ///     - VariableMutationAnalyzer(<see cref="ConstantMutationAnalyzer" />)<br />
     ///     - OpCodeMutationAnalyzer(<see cref="OpCodeMutationAnalyzer" />)<br />
+    ///     - LinqMutationAnalyzer(<see cref="LinqMutationAnalyzer"/>)<br />
     ///     <br /><br />
     ///     If you add your analyzer to one of those collections then it will be used in the process of analyzing.
     ///     Unfortunately, if your analyzer does not fit the interfaces, it can not be used with the `AssemblyMutator`.

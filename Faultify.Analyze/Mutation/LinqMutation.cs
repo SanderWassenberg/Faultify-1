@@ -1,10 +1,6 @@
-﻿using System;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using System.Linq;
 using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using MonoMod.Utils;
 
 namespace Faultify.Analyze.Mutation
@@ -30,7 +26,7 @@ namespace Faultify.Analyze.Mutation
             // import the replacementMethod in the target module
             var replacementMethodInModule = OriginalMethod.Module.ImportReference(ReplacementMethodInfo);
 
-            // create a instance of the replacement method and add the type arguments
+            // create an instance of the replacement method and add the type arguments
             var replacementMethod = new GenericInstanceMethod(replacementMethodInModule);
             replacementMethod.GenericArguments.AddRange(OriginalMethod.GenericArguments);
 

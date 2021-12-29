@@ -1,8 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Faultify.Analyze.Analyzers;
-using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -15,7 +13,7 @@ using TypeReference = Mono.Cecil.TypeReference;
 namespace Faultify.Analyze
 {
     /// <summary>
-    ///     Analyzer that searches for possible Linq mutations such as 'Last()' to 'First()'."
+    ///     Analyzer that searches for possible LINQ mutations such as 'Last()' to 'First()'."
     /// </summary>
     public class LinqMutationAnalyzer : IMutationAnalyzer<LinqMutation, MethodDefinition>
     {
@@ -96,11 +94,12 @@ namespace Faultify.Analyze
                     var replacementMethod = typeof(Enumerable).GetMethods().FirstOrDefault(m => m.Name == newMethodName &&
                         m.IsGenericMethodDefinition && ParametersAreEqual(originalParameters, m.GetParameters()));
                     
-                    // If the specified linq method could not be found, we probably want to log a error and skip the instruction
-                    // for now, assert the linq method can always be found
+                    // If the specified linq method could not be found, log an error and skip the instruction
                     if (replacementMethod == null)
                     {
-                        // TODO handle what to do if the linq method could not be found (also change comment above)
+                        // TODO once logging has been made global, log the following message:
+                        var errorMessage = $"The specified LINQ method ('{newMethodName}') could not be found with the same parameters of the original method." +
+                                           $" This could be due to a change in the LINQ library";
                         continue;
                     }
 
