@@ -69,7 +69,8 @@ namespace Faultify.TestRunner.Dotnet
                         new CancellationTokenSource(timeout).Token);
 
                     var deserializedTestResults = TestResults.Deserialize(testResultsBinary, true);
-
+                    
+                    //if test result is none(Time-out) remove all tests with exactly the same mutation on the same part in the code. Removes unnecessary tests
                     if (deserializedTestResults.Tests[0].Outcome == TestOutcome.None)
                     {
                         foreach (var variant in mutationVariants)
