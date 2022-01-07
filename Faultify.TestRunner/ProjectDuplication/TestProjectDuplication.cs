@@ -83,7 +83,7 @@ namespace Faultify.TestRunner.ProjectDuplication
                 var decompiler = new CodeDecompiler(reference.FullFilePath(), new MemoryStream(data));
 
                 // Create assembly mutator and look up the mutations according to the passed identifiers.
-                var assembly = new AssemblyMutator(new MemoryStream(data));
+                AssemblyMutator assembly = new AssemblyMutator(reference.FullFilePath());
 
                 foreach (var type in assembly.Types)
                 {

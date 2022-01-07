@@ -72,11 +72,11 @@ namespace Faultify.TestRunner
             // Copy project N times
             progressTracker.LogBeginProjectDuplication(_parallel);
             var testProjectCopier = new TestProjectDuplicator(Directory.GetParent(projectInfo.AssemblyPath).FullName);
-            var duplications = testProjectCopier.MakeInitialCopies(projectInfo, _parallel);
+
+            testProjectCopier.MakeInitialCopy(projectInfo);
 
             // Begin code coverage on first project.
-            var duplicationPool = new TestProjectDuplicationPool(duplications);
-            var coverageProject = duplicationPool.TakeTestProject();
+            var coverageProject = testProjectCopier.MakeCopy(1);
             var coverageProjectInfo = GetTestProjectInfo(coverageProject, projectInfo, progressTracker);
 
             // Measure the test coverage 
@@ -102,7 +102,7 @@ namespace Faultify.TestRunner
             // Start test session.
             var testsPerMutation = GroupMutationsWithTests(coverage);
             return StartMutationTestSession(coverageProjectInfo, testsPerMutation, progressTracker,
-                timeout, duplicationPool);
+                timeout, testProjectCopier);
         }
 
         /// <summary>
@@ -272,7 +272,7 @@ namespace Faultify.TestRunner
         private TestProjectReportModel StartMutationTestSession(TestProjectInfo testProjectInfo,
             Dictionary<RegisteredCoverage, HashSet<string>> testsPerMutation,
             MutationSessionProgressTracker sessionProgressTracker, TimeSpan coverageTestRunTime,
-            TestProjectDuplicationPool testProjectDuplicationPool)
+            TestProjectDuplicator testProjectDuplicator)
         {
             // Generate the mutation test runs for the mutation session.
             var defaultMutationTestRunGenerator = new DefaultMutationTestRunGenerator();
@@ -301,7 +301,7 @@ namespace Faultify.TestRunner
 
             async Task RunTestRun(IMutationTestRun testRun)
             {
-                var testProject = testProjectDuplicationPool.AcquireTestProject();
+                var testProject = testProjectDuplicator.MakeCopy(testRun.RunId + 2);
 
                 try
                 {

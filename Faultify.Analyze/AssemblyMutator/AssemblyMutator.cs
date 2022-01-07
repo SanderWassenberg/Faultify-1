@@ -79,7 +79,7 @@ namespace Faultify.Analyze.AssemblyMutator
             Types = LoadTypes();
         }
 
-        public AssemblyMutator(string assemblyPath) : this(new MemoryStream(File.ReadAllBytes(assemblyPath)))
+        public AssemblyMutator(string assemblyPath)
         {
             Module = ModuleDefinition.ReadModule(
                 assemblyPath,
@@ -89,7 +89,6 @@ namespace Faultify.Analyze.AssemblyMutator
                     ReadSymbols = true
                 }
             );
-
             Types = LoadTypes();
         }
 

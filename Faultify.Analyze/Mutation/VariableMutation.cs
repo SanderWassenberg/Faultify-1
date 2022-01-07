@@ -72,7 +72,6 @@ namespace Faultify.Analyze.Mutation
         {
             get
             {
-                LineNumber = FindLineNumber();
                 if (LineNumber == -1)
                     return $"{MethodScope.FullName.Split(']').Last()}: Change variable from: '{Original}' to '{Replacement}'";
 
