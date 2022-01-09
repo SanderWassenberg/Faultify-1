@@ -75,7 +75,7 @@ namespace Faultify.Analyze.Mutation
                 if (LineNumber == -1)
                     return $"{MethodScope.FullName.Split(']').Last()}: Change variable from: '{Original}' to '{Replacement}'";
 
-                return $"{MethodScope.FullName.Split(']').Last()}: Change variable from: '{Original}' to '{Replacement}' at line {LineNumber}";
+                return $"{MethodScope.FullName.Split(']').Last()} at line {LineNumber}: Change variable from: '{Original}' to '{Replacement}'";
             }
         }
     }
