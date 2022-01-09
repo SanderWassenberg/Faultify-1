@@ -7,7 +7,7 @@ namespace Faultify.Analyze.Mutation
 {
     public class VariableMutation : IMutation
     {
-        public VariableMutation(Instruction instruction, Type type, MethodDefinition method, object replacement)
+        public VariableMutation(Instruction instruction, MethodDefinition method, object replacement)
         {
             Original = instruction.Operand;
             Replacement = replacement;
@@ -73,9 +73,9 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"{MethodScope.FullName.Split(']').Last()}: Change variable from: '{Original}' to '{Replacement}'";
+                    return $"{MethodScope.FullName.Split(' ').Last()}: Change variable from: '{Original}' to '{Replacement}'";
 
-                return $"{MethodScope.FullName.Split(']').Last()} at line {LineNumber}: Change variable from: '{Original}' to '{Replacement}'";
+                return $"{MethodScope.FullName.Split(' ').Last()}: Change variable from: '{Original}' to '{Replacement}' at line {LineNumber}";
             }
         }
     }

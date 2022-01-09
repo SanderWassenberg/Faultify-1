@@ -1,6 +1,7 @@
 ﻿using Faultify.Analyze.ArrayMutationStrategy;
 using Mono.Cecil;
 using MonoMod.Utils;
+using System.Linq;
 
 namespace Faultify.Analyze.Mutation
 {
@@ -37,6 +38,6 @@ namespace Faultify.Analyze.Mutation
             _arrayMutationStrategy.Reset(_methodDefinitionToMutate, _methodDefClone);
         }
 
-        public string Report => $"Change array contents: {_arrayMutationStrategy.GetStrategyStringForReport()}";
+        public string Report => $"{_methodDefClone.FullName.Split(' ').Last()}: Change array contents: {_arrayMutationStrategy.GetStrategyStringForReport()}";
     }
 }

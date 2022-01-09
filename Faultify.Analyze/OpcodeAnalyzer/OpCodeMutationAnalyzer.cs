@@ -46,13 +46,12 @@ namespace Faultify.Analyze.OpcodeAnalyzer
             return _mappedOpCodes.TryGetValue(original, out var mutations)
                 ? mutations
                     .Where(mutant => mutationLevel.HasFlag(mutant.Item1))
-                    .Select(mutant => new OpCodeMutation
-                    {
-                        Original = original, 
-                        Replacement = mutant.Item2, 
-                        Instruction = scope, 
-                        LineNumber = lineNumber
-                    })
+                    .Select(mutant => new OpCodeMutation(
+                        original,
+                        mutant.Item2,
+                        scope,
+                        lineNumber
+                        ))
                 : Enumerable.Empty<OpCodeMutation>();
         }
     }

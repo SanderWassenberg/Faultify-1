@@ -1,4 +1,6 @@
-﻿using Mono.Cecil.Cil;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
+using System.Linq;
 
 namespace Faultify.Analyze.Mutation
 {
@@ -7,24 +9,33 @@ namespace Faultify.Analyze.Mutation
     /// </summary>
     public class OpCodeMutation : IMutation
     {
+        public OpCodeMutation(OpCode original, OpCode replacement, Instruction scope, int lineNumber)
+        {
+            Original = original;
+            Replacement = replacement;
+            Instruction = scope;
+            //MethodScope = method;
+            LineNumber = lineNumber;
+        }
+
         /// <summary>
         ///     The original opcode.
         /// </summary>
-        public OpCode Original;
+        private OpCode Original { get; set; }
 
         /// <summary>
         ///     The replacement for the original opcode.
         /// </summary>
-        public OpCode Replacement;
+        public OpCode Replacement { get; set; }
 
         /// <summary>
         ///     Reference to the instruction line in witch the opcode can be mutated.
         /// </summary>
-        public Instruction Instruction { get; set; }
+        private Instruction Instruction { get; set; }
 
-        public string Location { get; set; }
+        private MethodDefinition MethodScope { get; set; }
 
-        public int LineNumber { get; set; }
+        private int LineNumber { get; set; }
 
         public void Mutate()
         {
@@ -63,9 +74,9 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at location: {Location}";
+                    return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}'";
 
-                return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at location: {Location} at line {LineNumber}";
+                return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at line {LineNumber}";
             }
         }
     }

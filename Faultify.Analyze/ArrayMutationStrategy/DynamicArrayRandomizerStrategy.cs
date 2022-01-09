@@ -16,6 +16,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         private readonly RandomizedArrayBuilder _randomizedArrayBuilder;
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
+        private int LineNumber;
 
         public DynamicArrayRandomizerStrategy(MethodDefinition methodDefinition)
         {
@@ -56,6 +57,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 if (currentInstruction.OpCode == OpCodes.Newarr)
                 {
                     isnewarr = true;
+                    LineNumber = FindLineNumber(currentInstruction);
                 }
 
                 if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
@@ -137,9 +139,32 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             _methodDefinition.Body.OptimizeMacros();
         }
 
+        private int FindLineNumber(Instruction variable)
+        {
+            var debug = _methodDefinition.DebugInformation.GetSequencePointMapping();
+            int lineNumber = -1;
+
+            if (debug != null)
+            {
+                Instruction prev = variable;
+                SequencePoint seqPoint = null;
+                // If prev is not null and line number is not found try previous instruction.
+                while (prev != null && !debug.TryGetValue(prev, out seqPoint))
+                {
+                    prev = prev.Previous;
+                }
+
+                if (seqPoint != null)
+                {
+                    lineNumber = seqPoint.StartLine;
+                }
+            }
+            return lineNumber;
+        }
+
         public string GetStrategyStringForReport()
         {
-            return $"Randomized the array at location: {_methodDefinition.FullName.Split(']').Last()}";
+            return $"Randomized the array at line {LineNumber}";
         }
     }
 }

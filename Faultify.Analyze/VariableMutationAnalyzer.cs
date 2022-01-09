@@ -63,7 +63,7 @@ namespace Faultify.Analyze
                     // If the value is mapped then mutate it.
                     if (TypeChecker.IsVariableType(type))
                         mutations.Add(
-                            new VariableMutation(variableInstruction, type, method, _valueGenerator.GenerateValueForField(type, instruction.Previous.Operand)));
+                            new VariableMutation(variableInstruction, method, _valueGenerator.GenerateValueForField(type, instruction.Previous.Operand)));
                 }
                 catch (InvalidCastException e)
                 {
