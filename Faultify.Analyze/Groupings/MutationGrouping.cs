@@ -8,8 +8,12 @@ namespace Faultify.Analyze.Groupings
     ///     Base implementation for a mutation group.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class BaseGrouping<T> : IMutationGrouping<T> where T : IMutation
+    public class MutationGrouping<T> : IMutationGrouping<T> where T : IMutation
     {
+        public IEnumerable<T> Mutations { get; set; }
+        public string AnalyzerDescription { get; set; }
+        public string AnalyzerName { get; set; }
+
         public IEnumerator<T> GetEnumerator()
         {
             return Mutations.GetEnumerator();
@@ -17,21 +21,15 @@ namespace Faultify.Analyze.Groupings
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            return Mutations.GetEnumerator();
         }
 
-        public IEnumerable<T> Mutations { get; set; }
-        public string Key { get; set; }
-        public string AnalyzerDescription { get; set; }
-        public string AnalyzerName { get; set; }
-
         public string Description => AnalyzerDescription;
-
         public string Name => AnalyzerName;
 
         public override string ToString()
         {
-            return $"Analyzed by {AnalyzerName} ({AnalyzerDescription}), Key: {Key}";
+            return $"Analyzed by {AnalyzerName} ({AnalyzerDescription})";
         }
     }
 }

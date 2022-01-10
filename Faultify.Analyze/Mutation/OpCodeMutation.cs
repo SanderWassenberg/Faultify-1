@@ -9,13 +9,13 @@ namespace Faultify.Analyze.Mutation
     /// </summary>
     public class OpCodeMutation : IMutation
     {
-        public OpCodeMutation(OpCode original, OpCode replacement, Instruction scope, int lineNumber)
+        public OpCodeMutation(OpCode original, OpCode replacement, Instruction scope, MethodDefinition method)
         {
             Original = original;
             Replacement = replacement;
             Instruction = scope;
-            //MethodScope = method;
-            LineNumber = lineNumber;
+            MethodScope = method;
+            LineNumber = FindLineNumber();
         }
 
         /// <summary>
@@ -47,6 +47,29 @@ namespace Faultify.Analyze.Mutation
             Instruction.OpCode = Original;
         }
 
+        private int FindLineNumber()
+        {
+            var debug = MethodScope.DebugInformation.GetSequencePointMapping();
+            int lineNumber = -1;
+
+            if (debug != null)
+            {
+                Instruction prev = Instruction;
+                SequencePoint seqPoint = null;
+                // If prev is not null and line number is not found try previous instruction.
+                while (prev != null && !debug.TryGetValue(prev, out seqPoint))
+                {
+                    prev = prev.Previous;
+                }
+
+                if (seqPoint != null)
+                {
+                    lineNumber = seqPoint.StartLine;
+                }
+            }
+            return lineNumber;
+        }
+
         private string GetOpCodeName(OpCode opcode)
         {
             string name = opcode.Name switch
@@ -74,9 +97,9 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}'";
+                    return $"{MethodScope.FullName.Split(' ').Last()}: Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}'";
 
-                return $"Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at line {LineNumber}";
+                return $"{MethodScope.FullName.Split(' ').Last()}: Change operator from: '{GetOpCodeName(Original)}' to '{GetOpCodeName(Replacement)}' at line {LineNumber}";
             }
         }
     }

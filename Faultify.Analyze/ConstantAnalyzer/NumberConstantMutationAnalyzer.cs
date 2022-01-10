@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -28,9 +29,12 @@ namespace Faultify.Analyze.ConstantAnalyzer
 
         public TypeCollection Mapped { get; }
 
-        public override IEnumerable<ConstantMutation> AnalyzeMutations(FieldDefinition field,
+        public override IMutationGrouping<ConstantMutation> AnalyzeMutations(FieldDefinition field,
             MutationLevel mutationLevel, IDictionary<Instruction, SequencePoint> debug = null)
         {
+            // Make a new mutation list
+            List<ConstantMutation> mutations = new List<ConstantMutation>();
+
             var constantMutation = new ConstantMutation
             {
                 Original = field.Constant,
@@ -42,9 +46,16 @@ namespace Faultify.Analyze.ConstantAnalyzer
             if (Mapped.Types.TryGetValue(field.Constant.GetType(), out var fieldType))
             {
                 constantMutation.Replacement = _rng.GenerateValueForField(fieldType, field.Constant);
-
-                yield return constantMutation;
+                mutations.Add(constantMutation);
             }
+
+            // Build mutation group
+            return new MutationGrouping<ConstantMutation>
+            {
+                AnalyzerName = Name,
+                AnalyzerDescription = Description,
+                Mutations = mutations,
+            };
         }
     }
 }

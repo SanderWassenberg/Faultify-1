@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Faultify.Analyze.Analyzers;
 using Faultify.Analyze.ConstantAnalyzer;
 using Faultify.Analyze.Mutation;
 using Faultify.Analyze.OpcodeAnalyzer;
@@ -48,7 +49,7 @@ namespace Faultify.Analyze.AssemblyMutator
         /// <summary>
         ///     Analyzers that search for possible opcode mutations.
         /// </summary>
-        public HashSet<IMutationAnalyzer<OpCodeMutation, Instruction>> OpCodeMethodAnalyzers =
+        public HashSet<IMutationAnalyzer<OpCodeMutation, MethodDefinition>> OpCodeMethodAnalyzers =
             new()
             {
                 new ArithmeticMutationAnalyzer(),

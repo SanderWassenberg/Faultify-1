@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using Faultify.Analyze;
+using Faultify.Analyze.Analyzers;
 using Faultify.Analyze.Mutation;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -87,7 +88,7 @@ namespace Faultify.Tests.UnitTests.Utils
         /// <param name="expected"></param>
         /// <returns></returns>
         public static byte[] MutateMethod<TMutator>(byte[] binary, string method, OpCode expected,
-            bool simplefy = false) where TMutator : IMutationAnalyzer<OpCodeMutation, Instruction>
+            bool simplefy = false) where TMutator : IMutationAnalyzer<OpCodeMutation, MethodDefinition>
         {
             var module = ModuleDefinition.ReadModule(new MemoryStream(binary, false));
             var mutateMethod = module.Types.SelectMany(x => x.Methods).FirstOrDefault(x => x.Name == method);
@@ -98,7 +99,7 @@ namespace Faultify.Tests.UnitTests.Utils
 
             foreach (var instruction in mutateMethod.Body.Instructions)
             {
-                var possibleOperatorMutations = mutator.AnalyzeMutations(instruction, MutationLevel.Detailed);
+                var possibleOperatorMutations = mutator.AnalyzeMutations(mutateMethod, MutationLevel.Detailed);
 
                 foreach (var mutation in possibleOperatorMutations)
                 {
