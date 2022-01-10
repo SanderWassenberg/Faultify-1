@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Faultify.Analyze.Mutation;
 using Faultify.Analyze.Strategies;
 using Faultify.Core.Extensions;
@@ -28,7 +25,6 @@ namespace Faultify.Analyze
                     mutations.Add(new ListMutation(new EmptyListStrategy(method), method));
                 }
             }
-
 
             return mutations;
         }

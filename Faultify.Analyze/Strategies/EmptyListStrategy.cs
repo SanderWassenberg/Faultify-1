@@ -3,11 +3,6 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Faultify.Analyze.Strategies
 {
@@ -40,12 +35,25 @@ namespace Faultify.Analyze.Strategies
 
             // Assume we're on the instruction following the newobj that makes the list.
             // There is one list reference on the stack (stackSize = 1). It will stay there for as long as the list
-            // initializer does its thing. When the list reference disappears (stackCount == 0),
+            // initializer does its thing. When the list reference disappears (stackSize == 0),
             // the list initializer is done, and we can stop removing instructions.
             int stackSize = 1;
             do
             {
                 var currentInstruction = instructions[index];
+
+                /*
+                 This code is buggy and cannot handle initializers with branching such as:
+                    new List<int>{ (cond ? a : b), c, d, e }
+                 A possible solution is show below.
+                 */
+
+                //if (/* currentInstruction is a jump forward (backwards causes loop and can be skipped) */)
+                //{
+                //    /*do jump*/
+                //    continue;
+                //}
+
                 UpdateStackSize(ref stackSize, currentInstruction);
                 if (stackSize <= 0) break;
                 instructions.RemoveAt(index);
