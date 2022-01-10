@@ -109,10 +109,14 @@ namespace Faultify.Tests.UnitTests
                 mutations.FirstOrDefault(x => x.AnalyzerName == new ArithmeticMutationAnalyzer().Name);
             var comparisonMutations =
                 mutations.FirstOrDefault(x => x.AnalyzerName == new ComparisonMutationAnalyzer().Name);
+            var bitWiseMutations =
+                mutations.FirstOrDefault(x => x.Name == new BitwiseMutationAnalyzer().Name);
 
-            Assert.AreEqual(mutations.Count, 2);
+
+            Assert.AreEqual(mutations.Count, 3);
             Assert.IsNotNull(arithmeticMutations, null);
             Assert.IsNotNull(comparisonMutations, null);
+            Assert.IsEmpty(bitWiseMutations);
         }
 
         [Test]
