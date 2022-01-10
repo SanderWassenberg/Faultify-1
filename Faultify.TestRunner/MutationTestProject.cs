@@ -70,7 +70,6 @@ namespace Faultify.TestRunner
             }
 
             // Copy project N times
-            //progressTracker.LogBeginProjectDuplication(_parallel);
             var testProjectCopier = new TestProjectDuplicator(Directory.GetParent(projectInfo.AssemblyPath).FullName);
 
             testProjectCopier.MakeInitialCopy(projectInfo);
