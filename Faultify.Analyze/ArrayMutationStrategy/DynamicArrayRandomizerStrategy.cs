@@ -43,6 +43,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             _methodDefinition.Body.SimplifyMacros();
 
             var length = 0;
+            var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
             Dictionary<string, int> localVariables = new Dictionary<string, int>();
 
@@ -51,23 +52,32 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // Get the length of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
             bool isnewarr = false;
+            int arrayCounter = 1;
             while (currentInstruction != null)
             {
-                if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Next.OpCode == OpCodes.Newarr)
-                    length = (int)currentInstruction.Operand;
-
-                if (currentInstruction.OpCode == OpCodes.Newarr)
+                if (_type.ToSystemType() == typeof(bool) && currentInstruction.OpCode == OpCodes.Stloc && currentInstruction.Previous.OpCode == OpCodes.Ldc_I4)
                 {
-                    isnewarr = true;
-                    _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
+                    localVariables.Add(currentInstruction.Operand.ToString(), (int)currentInstruction.Previous.Operand);
                 }
 
                 if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
                     break;
 
-                if (_type.ToSystemType() == typeof(bool) && currentInstruction.OpCode == OpCodes.Stloc && currentInstruction.Previous.OpCode == OpCodes.Ldc_I4)
+                if (!currentInstruction.IsDynamicArray())
                 {
-                    localVariables.Add(currentInstruction.Operand.ToString(), (int)currentInstruction.Previous.Operand);
+                    beforeArray.Add(currentInstruction);
+                }
+                else if (arrayCounter == _arrayCounter)
+                {
+                    length = (int)currentInstruction.Previous.Operand;
+                    beforeArray.Remove(currentInstruction.Previous);
+                    isnewarr = true;
+                    _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
+                }
+                else
+                {
+                    beforeArray.Add(currentInstruction);
+                    arrayCounter++;
                 }
 
                 currentInstruction = currentInstruction.Next;
@@ -95,13 +105,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // if the array is created by adding each item by index, go over all these instructions
             else
             {
+                int dataCounter = 0;
                 while (currentInstruction != null)
                 {
                     // when you reach an Stloc, all values have been set
                     if (currentInstruction.OpCode == OpCodes.Stloc) break;
 
                     // the first Ldc_i4 instruction sets the index, the following commands sets the value
-                    if (currentInstruction.OpCode == OpCodes.Ldc_I4)
+                    if (currentInstruction.OpCode == OpCodes.Ldc_I4 && dataCounter != length)
                     {
                         if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
                         {
@@ -111,6 +122,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         else
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
+                            dataCounter++;
                         }
                         currentInstruction = currentInstruction.Next;
                     }
@@ -128,6 +140,9 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             // remove all the instructions
             processor.Clear();
+
+            // Append everything before array.
+            foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
             var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data);
