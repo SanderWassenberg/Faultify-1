@@ -2,6 +2,7 @@
 using Mono.Cecil.Cil;
 using System.Reflection;
 using MonoMod.Utils;
+using System.Linq;
 
 namespace Faultify.Analyze.Mutation
 {
@@ -13,12 +14,16 @@ namespace Faultify.Analyze.Mutation
         private GenericInstanceMethod OriginalMethod { get; }
         private MethodInfo ReplacementMethodInfo { get; }
         private Instruction Instruction { get; }
+        private MethodDefinition MethodScope { get; }
+        private int LineNumber { get; set; }
 
-        public LinqMutation(Instruction instruction, GenericInstanceMethod originalMethod, MethodInfo replacementMethodInfo)
+        public LinqMutation(Instruction instruction, GenericInstanceMethod originalMethod, MethodInfo replacementMethodInfo, MethodDefinition method)
         {
             Instruction = instruction;
             OriginalMethod = originalMethod;
             ReplacementMethodInfo = replacementMethodInfo;
+            MethodScope = method;
+            LineNumber = AnalyzeUtils.FindLineNumber(instruction, method);
         }
 
         public void Mutate()
@@ -38,6 +43,6 @@ namespace Faultify.Analyze.Mutation
             Instruction.Operand = OriginalMethod;
         }
 
-        public string Report => $"Change LINQ method from '{OriginalMethod.Name}' to '{ReplacementMethodInfo.Name}'";
+        public string Report => $"{MethodScope.FullName.Split(' ').Last()} :Change LINQ method from '{OriginalMethod.Name}' to '{ReplacementMethodInfo.Name}' at line {LineNumber}";
     }
 }
