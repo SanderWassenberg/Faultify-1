@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Mono.Cecil.Cil;
 
 namespace Faultify.Analyze.OpcodeAnalyzer
@@ -10,7 +10,7 @@ namespace Faultify.Analyze.OpcodeAnalyzer
     public class BitwiseMutationAnalyzer : OpCodeMutationAnalyzer
     {
         private static readonly Dictionary<OpCode, IEnumerable<(MutationLevel, OpCode)>> Bitwise =
-            new()
+            new Dictionary<OpCode, IEnumerable<(MutationLevel, OpCode)>>
             {
                 // Opcodes for mutation bitwise operator: '|' to '&' , and '^'. 
                 { OpCodes.Or, new[] { (MutationLevel.Simple, OpCodes.And), (MutationLevel.Medium, OpCodes.Xor) } },
@@ -19,7 +19,16 @@ namespace Faultify.Analyze.OpcodeAnalyzer
                 { OpCodes.And, new[] { (MutationLevel.Simple, OpCodes.Or), (MutationLevel.Medium, OpCodes.Xor) } },
 
                 // Opcodes for mutation bitwise operator: '^' to '|' , and '&'. 
-                { OpCodes.Xor, new[] { (MutationLevel.Simple, OpCodes.Or), (MutationLevel.Medium, OpCodes.And) } }
+                { OpCodes.Xor, new[] { (MutationLevel.Simple, OpCodes.Or), (MutationLevel.Medium, OpCodes.And) } },
+                
+                // Opcodes for mutation bitwise operator: '<<' to '>>'. 
+                { OpCodes.Shl, new[] { (MutationLevel.Simple, OpCodes.Shr)} },
+
+                // Opcodes for mutation bitwise operator: '>>' (signed) to '<<'. 
+                { OpCodes.Shr, new[] { (MutationLevel.Simple, OpCodes.Shl)} },
+
+                // Opcodes for mutation bitwise operator: '>>' (unsigned) to '<<'. 
+                { OpCodes.Shr_Un, new[] { (MutationLevel.Simple, OpCodes.Shl)} }
             };
 
         public BitwiseMutationAnalyzer() : base(Bitwise)
