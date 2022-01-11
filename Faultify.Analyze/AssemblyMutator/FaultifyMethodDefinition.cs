@@ -20,14 +20,9 @@ namespace Faultify.Analyze.AssemblyMutator
     {
         private readonly HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> _arrayMutationAnalyzers;
         private readonly HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> _listMutationAnalyzers;
-
-        private readonly HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>>
-            _constantReferenceMutationAnalyers;
-
+        private readonly HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> _constantReferenceMutationAnalyers;
         private readonly HashSet<IMutationAnalyzer<OpCodeMutation, MethodDefinition>> _opcodeMethodAnalyzers;
-
         private readonly HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>> _variableMutationAnalyzers;
-
         private readonly HashSet<IMutationAnalyzer<LinqMutation, MethodDefinition>> _linqMutationAnalyzers;
 
         /// <summary>
@@ -80,6 +75,7 @@ namespace Faultify.Analyze.AssemblyMutator
             allMutationsList.AddRange(ArrayMutations(mutationLevel));
             allMutationsList.AddRange(LinqMutations(mutationLevel));
             allMutationsList.AddRange(ListMutations(mutationLevel));
+            allMutationsList.AddRange(ConstantReferenceMutations(mutationLevel));
 
             return allMutationsList;
         }

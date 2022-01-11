@@ -22,7 +22,7 @@ namespace Faultify.Analyze.Mutation
             _originalMethod = methodDef.Clone();
         }
 
-        public string Report => $"Change list contents. {_mutationStrategy.GetStrategyStringForReport()}";
+        public string Report => $"{_originalMethod.FullName.Split(' ').Last()}: Change list contents. {_mutationStrategy.GetStrategyStringForReport()}";
 
         public void Mutate()
         {

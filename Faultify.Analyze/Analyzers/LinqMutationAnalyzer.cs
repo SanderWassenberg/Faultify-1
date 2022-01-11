@@ -105,7 +105,7 @@ namespace Faultify.Analyze
                         continue;
                     }
 
-                    mutations.Add(new LinqMutation(instruction, originalMethod, replacementMethod));
+                    mutations.Add(new LinqMutation(instruction, originalMethod, replacementMethod, method));
                 }
             }
 

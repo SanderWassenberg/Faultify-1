@@ -10,6 +10,7 @@ namespace Faultify.Analyze.Strategies
     {
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
+        private int _lineNumber;
 
         public EmptyListStrategy(MethodDefinition methodDefinition)
         {
@@ -17,7 +18,7 @@ namespace Faultify.Analyze.Strategies
             _type = methodDefinition.ReturnType.GetElementType();
         }
 
-        public string GetStrategyStringForReport() => "Emptied the list";
+        public string GetStrategyStringForReport() => $"Emptied the list at line {_lineNumber}";
 
         public void Mutate()
         {
@@ -32,6 +33,8 @@ namespace Faultify.Analyze.Strategies
             int index = 0;
             while (index < instructions.Count
                 && !instructions[index++].IsListInitialiser()) ;
+
+            _lineNumber = AnalyzeUtils.FindLineNumber(instructions[index], _methodDefinition);
 
             // Assume we're on the instruction following the newobj that makes the list.
             // There is one list reference on the stack (stackSize = 1). It will stay there for as long as the list

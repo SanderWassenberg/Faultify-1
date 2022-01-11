@@ -19,7 +19,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         private readonly RandomizedArrayBuilder _arrayBuilder;
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
-        private int LineNumber;
+        private int _lineNumber;
 
         public EmptyArrayStrategy(MethodDefinition methodDefinition)
         {
@@ -52,7 +52,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 if (currentInstruction.OpCode == OpCodes.Newarr)
                 {
                     isnewarr = true;
-                    LineNumber = FindLineNumber(currentInstruction);
+                    _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
                 }
 
                 if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
@@ -104,32 +104,9 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             _methodDefinition.Body.OptimizeMacros();
         }
 
-        private int FindLineNumber(Instruction variable)
-        {
-            var debug = _methodDefinition.DebugInformation.GetSequencePointMapping();
-            int lineNumber = -1;
-
-            if (debug != null)
-            {
-                Instruction prev = variable;
-                SequencePoint seqPoint = null;
-                // If prev is not null and line number is not found try previous instruction.
-                while (prev != null && !debug.TryGetValue(prev, out seqPoint))
-                {
-                    prev = prev.Previous;
-                }
-
-                if (seqPoint != null)
-                {
-                    lineNumber = seqPoint.StartLine;
-                }
-            }
-            return lineNumber;
-        }
-
         public string GetStrategyStringForReport()
         {
-            return $"Emptied the array at line {LineNumber}";
+            return $"Emptied the array at line {_lineNumber}";
         }
     }
 }

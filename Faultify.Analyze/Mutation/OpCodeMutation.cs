@@ -15,7 +15,7 @@ namespace Faultify.Analyze.Mutation
             Replacement = replacement;
             Instruction = scope;
             MethodScope = method;
-            LineNumber = FindLineNumber();
+            LineNumber = AnalyzeUtils.FindLineNumber(Instruction, MethodScope);
         }
 
         /// <summary>
@@ -45,29 +45,6 @@ namespace Faultify.Analyze.Mutation
         public void Reset()
         {
             Instruction.OpCode = Original;
-        }
-
-        private int FindLineNumber()
-        {
-            var debug = MethodScope.DebugInformation.GetSequencePointMapping();
-            int lineNumber = -1;
-
-            if (debug != null)
-            {
-                Instruction prev = Instruction;
-                SequencePoint seqPoint = null;
-                // If prev is not null and line number is not found try previous instruction.
-                while (prev != null && !debug.TryGetValue(prev, out seqPoint))
-                {
-                    prev = prev.Previous;
-                }
-
-                if (seqPoint != null)
-                {
-                    lineNumber = seqPoint.StartLine;
-                }
-            }
-            return lineNumber;
         }
 
         private string GetOpCodeName(OpCode opcode)
