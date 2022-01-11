@@ -73,7 +73,6 @@ namespace Faultify.Analyze.AssemblyMutator
             return ((IEnumerable<IMutationGrouping<IMutation>>) OpCodeMutations(mutationLevel))
                 .Concat(VariableMutations(mutationLevel))
                 .Concat(ArrayMutations(mutationLevel))
-                .Concat(ArrayMutations(mutationLevel))
                 .Concat(ListMutations(mutationLevel));
         }
 
