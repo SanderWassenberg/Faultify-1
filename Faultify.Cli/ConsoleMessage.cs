@@ -25,7 +25,7 @@ namespace Faultify.Cli
             var settingsString =
                 "\n" +
                 $"| Mutation Level: {settings.MutationLevel}\n" +
-                $"| Test Runners: {settings.Parallel}\n" +
+                $"| Test Host: {settings.TestHost}\n" +
                 $"| Report Path: {settings.ReportPath}\n" +
                 $"| Report Type: {settings.ReportType}\n" +
                 $"| Test Project Path: {settings.TestProjectPath}\n" +

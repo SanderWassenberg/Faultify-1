@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Faultify.Analyze.ArrayMutationStrategy;
+using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Faultify.Core.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Faultify.Analyze
+namespace Faultify.Analyze.Analyzers
 {
     /// <summary>
     ///     Analyzer that searches for possible array mutations inside a method definition.
@@ -38,20 +39,26 @@ namespace Faultify.Analyze
         /// </summary>
         /// <param name="method"></param>
         /// <returns></returns>
-        public IEnumerable<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
+        public IMutationGrouping<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
             List<ArrayMutation> mutations = new List<ArrayMutation>();
-             foreach (var instruction in method.Body.Instructions)
+            foreach (var instruction in method.Body.Instructions)
                 // Call the corresponding strategy based on the result
-                 if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
-                 {
-                     //Add all possible or desired strategies to the mutation list
-                     mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
-                     mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
-                 }
+                if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
+                {
+                    //Add all possible or desired strategies to the mutation list
+                    mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
+                    mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
+                }
 
-             return mutations;
+            // Build Mutation Group
+            return new MutationGrouping<ArrayMutation>
+            {
+                AnalyzerName = Name,
+                AnalyzerDescription = Description,
+                Mutations = mutations,
+            };
         }
 
         /// <summary>

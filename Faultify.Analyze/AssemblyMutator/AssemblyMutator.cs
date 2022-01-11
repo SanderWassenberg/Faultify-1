@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Faultify.Analyze.Analyzers;
 using Faultify.Analyze.ConstantAnalyzer;
 using Faultify.Analyze.Mutation;
 using Faultify.Analyze.OpcodeAnalyzer;
@@ -35,6 +36,15 @@ namespace Faultify.Analyze.AssemblyMutator
             };
 
         /// <summary>
+        ///     Analyzers that search for possible list mutations inside a method definition.
+        /// </summary>
+        public HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> ListMutationAnalyzers =
+            new()
+            {
+                new ListMutationAnalyzer()
+            };
+
+        /// <summary>
         ///     Analyzers that search for possible constant mutations.
         /// </summary>
         public HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> FieldAnalyzers =
@@ -48,7 +58,7 @@ namespace Faultify.Analyze.AssemblyMutator
         /// <summary>
         ///     Analyzers that search for possible opcode mutations.
         /// </summary>
-        public HashSet<IMutationAnalyzer<OpCodeMutation, Instruction>> OpCodeMethodAnalyzers =
+        public HashSet<IMutationAnalyzer<OpCodeMutation, MethodDefinition>> OpCodeMethodAnalyzers =
             new()
             {
                 new ArithmeticMutationAnalyzer(),
@@ -79,7 +89,7 @@ namespace Faultify.Analyze.AssemblyMutator
             Types = LoadTypes();
         }
 
-        public AssemblyMutator(string assemblyPath) : this(new MemoryStream(File.ReadAllBytes(assemblyPath)))
+        public AssemblyMutator(string assemblyPath)
         {
             Module = ModuleDefinition.ReadModule(
                 assemblyPath,
@@ -89,7 +99,6 @@ namespace Faultify.Analyze.AssemblyMutator
                     ReadSymbols = true
                 }
             );
-
             Types = LoadTypes();
         }
 
@@ -113,7 +122,7 @@ namespace Faultify.Analyze.AssemblyMutator
             return Module.Types
                 .Where(type => !type.FullName.StartsWith("<"))
                 .Select(type => new FaultifyTypeDefinition(type, OpCodeMethodAnalyzers, FieldAnalyzers,
-                    VariableMutationAnalyzers, ArrayMutationAnalyzers))
+                    VariableMutationAnalyzers, ArrayMutationAnalyzers, ListMutationAnalyzers))
                 .ToList();
         }
 

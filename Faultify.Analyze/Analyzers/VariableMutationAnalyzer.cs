@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Faultify.Core.Extensions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Faultify.Analyze
+namespace Faultify.Analyze.Analyzers
 {
     /// <summary>
     ///     Analyzer that searches for possible variable mutations.
@@ -30,15 +31,9 @@ namespace Faultify.Analyze
 
         public string Name => "Variable Mutation Analyzer";
 
-        public IEnumerable<VariableMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
+        public IMutationGrouping<VariableMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
-            //TODO Check Quick fix
-            if (method?.Body == null)
-                return Enumerable.Empty<VariableMutation>();
-
-            var lineNumber = -1;
-
             var mutations = new List<VariableMutation>();
             foreach (var instruction in method.Body.Instructions)
             {
@@ -53,13 +48,6 @@ namespace Faultify.Analyze
 
                 try
                 {
-                    if (debug != null)
-                    {
-                        debug.TryGetValue(instruction, out var tempSeqPoint);
-
-                        if (tempSeqPoint != null) lineNumber = tempSeqPoint.StartLine;
-                    }
-
                     // Get variable type. Might throw InvalidCastException
                     var type = ((VariableReference)instruction.Operand).Resolve().VariableType.ToSystemType();
 
@@ -72,13 +60,7 @@ namespace Faultify.Analyze
                     // If the value is mapped then mutate it.
                     if (TypeChecker.IsVariableType(type))
                         mutations.Add(
-                            new VariableMutation
-                            {
-                                Original = variableInstruction.Operand,
-                                Replacement = _valueGenerator.GenerateValueForField(type, instruction.Previous.Operand),
-                                Variable = variableInstruction,
-                                LineNumber = lineNumber
-                            });
+                            new VariableMutation(variableInstruction, method, _valueGenerator.GenerateValueForField(type, instruction.Previous.Operand)));
                 }
                 catch (InvalidCastException e)
                 {
@@ -86,7 +68,12 @@ namespace Faultify.Analyze
                 }
             }
 
-            return mutations;
+            return new MutationGrouping<VariableMutation>
+            {
+                AnalyzerName = Name,
+                AnalyzerDescription = Description,
+                Mutations = mutations,
+            };
         }
     }
 }

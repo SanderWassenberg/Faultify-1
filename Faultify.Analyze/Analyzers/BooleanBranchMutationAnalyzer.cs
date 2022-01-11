@@ -2,7 +2,7 @@
 using Faultify.Analyze.OpcodeAnalyzer;
 using Mono.Cecil.Cil;
 
-namespace Faultify.Analyze
+namespace Faultify.Analyze.Analyzers
 {
     /// <summary>
     ///     Analyzer that searches for possible boolean branching mutations inside a method definition.

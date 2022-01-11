@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Faultify.Report
 {
@@ -6,7 +7,7 @@ namespace Faultify.Report
     {
         public MutationVariantReportModel(string name, string description, MutationAnalyzerReportModel mutationAnalyzer,
             MutationStatus testStatus, TimeSpan testDuration, string originalSource, string mutatedSource,
-            int mutationId, string memberName)
+            int mutationId, string memberName, List<string> failedTests)
         {
             Name = name;
             Description = description;
@@ -17,6 +18,7 @@ namespace Faultify.Report
             MutatedSource = mutatedSource;
             MutationId = mutationId;
             MemberName = memberName;
+            FailedTests = failedTests;
         }
 
         public string Name { get; set; }
@@ -28,5 +30,6 @@ namespace Faultify.Report
         public string MutatedSource { get; set; }
         public int MutationId { get; set; }
         public string MemberName { get; set; }
+        public List<string> FailedTests { get; set; }
     }
 }

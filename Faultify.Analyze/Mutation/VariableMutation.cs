@@ -1,25 +1,62 @@
-﻿using Mono.Cecil.Cil;
+﻿using Mono.Cecil;
+using Mono.Cecil.Cil;
+using System;
+using System.Linq;
 
 namespace Faultify.Analyze.Mutation
 {
     public class VariableMutation : IMutation
     {
+        public VariableMutation(Instruction instruction, MethodDefinition method, object replacement)
+        {
+            Original = instruction.Operand;
+            Replacement = replacement;
+            Variable = instruction;
+            MethodScope = method;
+            LineNumber = FindLineNumber();
+        }
+
         /// <summary>
         ///     The original variable value.
         /// </summary>
-        public object Original { get; set; }
+        private object Original { get; set; }
 
         /// <summary>
         ///     The replacement for the variable value.
         /// </summary>
-        public object Replacement { get; set; }
+        private object Replacement { get; set; }
 
         /// <summary>
         ///     Reference to the variable instruction that can be mutated.
         /// </summary>
-        public Instruction Variable { get; set; }
+        private Instruction Variable { get; set; }
 
-        public int LineNumber { get; set; }
+        private MethodDefinition MethodScope { get; set; }
+
+        private int LineNumber { get; set; }
+
+        private int FindLineNumber()
+        {
+            var debug = MethodScope.DebugInformation.GetSequencePointMapping();
+            int lineNumber = -1;
+
+            if (debug != null)
+            {
+                Instruction prev = Variable;
+                SequencePoint seqPoint = null;
+                // If prev is not null and line number is not found try previous instruction.
+                while (prev != null && !debug.TryGetValue(prev, out seqPoint))
+                {
+                    prev = prev.Previous;
+                }
+
+                if (seqPoint != null)
+                {
+                    lineNumber = seqPoint.StartLine;
+                }
+            }
+            return lineNumber;
+        }
 
         public void Mutate()
         {
@@ -36,9 +73,9 @@ namespace Faultify.Analyze.Mutation
             get
             {
                 if (LineNumber == -1)
-                    return $"Change variable from: '{Original}' to: '{Replacement}'.";
+                    return $"{MethodScope.FullName.Split(' ').Last()}: Change variable from: '{Original}' to '{Replacement}'";
 
-                return $"Change variable from: '{Original}' to: '{Replacement}'. In line {LineNumber}";
+                return $"{MethodScope.FullName.Split(' ').Last()}: Change variable from: '{Original}' to '{Replacement}' at line {LineNumber}";
             }
         }
     }

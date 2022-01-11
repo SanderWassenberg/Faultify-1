@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
+using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Mono.Cecil.Cil;
 
-namespace Faultify.Analyze
+namespace Faultify.Analyze.Analyzers
 {
     /// <summary>
     ///     Interface for analyzers that search for possible source code mutations on byte code level.
@@ -12,7 +13,7 @@ namespace Faultify.Analyze
     public interface IMutationAnalyzer<TMutation, in TScope> where TMutation : IMutation
     {
         /// <summary>
-        ///     Name of the mutator.
+        ///     Description of the mutator.
         /// </summary>
         string Description { get; }
 
@@ -25,7 +26,7 @@ namespace Faultify.Analyze
         ///     Analyzes possible mutations in the given scope.
         ///     Returns the mutation that can be either executed or reverted.
         /// </summary>
-        IEnumerable<TMutation> AnalyzeMutations(TScope scope, MutationLevel mutationLevel,
+        IMutationGrouping<TMutation> AnalyzeMutations(TScope scope, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null);
     }
 }

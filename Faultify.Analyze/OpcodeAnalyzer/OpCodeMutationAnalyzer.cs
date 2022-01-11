@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Faultify.Analyze.Analyzers;
+using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace Faultify.Analyze.OpcodeAnalyzer
@@ -10,7 +13,7 @@ namespace Faultify.Analyze.OpcodeAnalyzer
     ///     A list with opcodes definitions can be found here: https://en.wikipedia.org/wiki/List_of_CIL_instructions
     /// </summary>
     public abstract class
-        OpCodeMutationAnalyzer : IMutationAnalyzer<OpCodeMutation, Instruction>
+        OpCodeMutationAnalyzer : IMutationAnalyzer<OpCodeMutation, MethodDefinition>
     {
         private readonly Dictionary<OpCode, IEnumerable<(MutationLevel, OpCode)>> _mappedOpCodes;
 
@@ -23,34 +26,36 @@ namespace Faultify.Analyze.OpcodeAnalyzer
 
         public abstract string Name { get; }
 
-        public IEnumerable<OpCodeMutation> AnalyzeMutations(Instruction scope, MutationLevel mutationLevel,
+        public IMutationGrouping<OpCodeMutation> AnalyzeMutations(MethodDefinition scope, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
-            // Store original opcode for a reset later on.
-            var original = scope.OpCode;
-
-            var lineNumber = -1;
-            if (debug != null)
+            var mutationGroup = new List<IEnumerable<OpCodeMutation>>();
+            foreach (var instruction in scope.Body.Instructions)
             {
-                var prev = scope;
-                SequencePoint seqPoint = null;
-                // If prev is not null
-                // and line number is not found
-                // Try previous instruction.
-                while (prev != null && !debug.TryGetValue(prev, out seqPoint)) prev = prev.Previous;
+                // Store original opcode for a reset later on.
+                var original = instruction.OpCode;
 
-                if (seqPoint != null) lineNumber = seqPoint.StartLine;
+                if (_mappedOpCodes.ContainsKey(original))
+                {
+                    var mutations = _mappedOpCodes[original]
+                        .Where(mutant => mutationLevel.HasFlag(mutant.Item1))
+                        .Select(mutant => new OpCodeMutation(
+                            original,
+                            mutant.Item2,
+                            instruction,
+                            scope
+                            ));
+
+                    mutationGroup.Add(mutations);
+                }
             }
 
-            // Try to get the instruction opcode from the mapped mappedOpCodes.
-            return _mappedOpCodes.TryGetValue(original, out var mutations)
-                ? mutations
-                    .Where(mutant => mutationLevel.HasFlag(mutant.Item1))
-                    .Select(mutant => new OpCodeMutation
-                    {
-                        Original = original, Replacement = mutant.Item2, Instruction = scope, LineNumber = lineNumber
-                    })
-                : Enumerable.Empty<OpCodeMutation>();
+            return new MutationGrouping<OpCodeMutation>
+            {
+                Mutations = mutationGroup.SelectMany(x => x),
+                AnalyzerName = Name,
+                AnalyzerDescription = Description
+            };
         }
     }
 }

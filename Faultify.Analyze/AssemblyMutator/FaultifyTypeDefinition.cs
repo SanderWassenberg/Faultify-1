@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using Faultify.Analyze.Analyzers;
 using Faultify.Analyze.Groupings;
 using Faultify.Analyze.Mutation;
 using Mono.Cecil.Cil;
@@ -19,10 +20,11 @@ namespace Faultify.Analyze.AssemblyMutator
         private readonly HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> _constantAnalyzers;
 
         public FaultifyTypeDefinition(TypeDefinition typeDefinition,
-            HashSet<IMutationAnalyzer<OpCodeMutation, Instruction>> opcodeAnalyzers,
+            HashSet<IMutationAnalyzer<OpCodeMutation, MethodDefinition>> opcodeAnalyzers,
             HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> fieldAnalyzers,
             HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>> variableMutationAnalyzers,
-            HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> arrayMutationAnalyzers
+            HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> arrayMutationAnalyzers,
+            HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> listMutationAnalyzers
         )
         {
             _constantAnalyzers = fieldAnalyzers;
@@ -31,7 +33,7 @@ namespace Faultify.Analyze.AssemblyMutator
             Fields = TypeDefinition.Fields.Select(x => new FaultifyFieldDefinition(x, fieldAnalyzers)).ToList();
             Methods = TypeDefinition.Methods.Select(x =>
                     new FaultifyMethodDefinition(x, fieldAnalyzers, opcodeAnalyzers, variableMutationAnalyzers,
-                        arrayMutationAnalyzers))
+                        arrayMutationAnalyzers, listMutationAnalyzers))
                 .ToList();
         }
 
@@ -55,14 +57,16 @@ namespace Faultify.Analyze.AssemblyMutator
         public IEnumerable<IMutationGrouping<IMutation>> AllMutations(MutationLevel mutationLevel)
         {
             foreach (var analyzer in _constantAnalyzers)
-            foreach (var field in TypeDefinition.Fields)
-                yield return new ConstMutationGrouping
+            {
+                foreach (var field in TypeDefinition.Fields)
                 {
-                    Mutations = analyzer.AnalyzeMutations(field, mutationLevel),
-                    Key = field.Name,
-                    AnalyzerName = analyzer.Name,
-                    AnalyzerDescription = analyzer.Description
-                };
+                    IMutationGrouping<IMutation> mutations = analyzer.AnalyzeMutations(field, mutationLevel);
+                    if (mutations.Any())
+                    {
+                        yield return mutations;
+                    }
+                }
+            }
         }
     }
 }
