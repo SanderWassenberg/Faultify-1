@@ -20,12 +20,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
         private int _lineNumber;
+        private int _arrayCounter;
 
-        public EmptyArrayStrategy(MethodDefinition methodDefinition)
+        public EmptyArrayStrategy(MethodDefinition methodDefinition, int arrayCounter)
         {
             _arrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
             _type = methodDefinition.ReturnType.GetElementType();
+            _arrayCounter = arrayCounter;
         }
 
         public void Reset(MethodDefinition methodBody, MethodDefinition methodClone)
@@ -40,6 +42,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             var processor = _methodDefinition.Body.GetILProcessor();
             _methodDefinition.Body.SimplifyMacros();
 
+            var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
 
             var currentInstruction = _methodDefinition.Body.Instructions[0];
@@ -47,17 +50,28 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // Get the type of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
             bool isnewarr = false;
+            int arrayCounter = 1;
             while (currentInstruction != null)
             {
-                if (currentInstruction.OpCode == OpCodes.Newarr)
-                {
-                    isnewarr = true;
-                    _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
-                }
-
                 if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
                 {
                     break;
+                }
+
+                if (!currentInstruction.IsDynamicArray())
+                {
+                    beforeArray.Add(currentInstruction);
+                } 
+                else if (arrayCounter == _arrayCounter)
+                {
+                    beforeArray.Remove(currentInstruction.Previous);
+                    isnewarr = true;
+                    _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
+                } 
+                else
+                {
+                    beforeArray.Add(currentInstruction);
+                    arrayCounter++;
                 }
 
                 currentInstruction = currentInstruction.Next;
@@ -82,6 +96,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 }
             }
 
+
             // add the instructions to be run after the values have been set
             while (currentInstruction != null)
             {
@@ -91,6 +106,9 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
             // remove all the instructions
             processor.Clear();
+
+            // Append everything before array.
+            foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
             var newArray = _arrayBuilder.CreateEmptyArray(processor, _type);

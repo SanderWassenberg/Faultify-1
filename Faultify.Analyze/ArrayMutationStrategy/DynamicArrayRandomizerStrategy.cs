@@ -17,12 +17,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
         private int _lineNumber;
+        private int _arrayCounter;
 
-        public DynamicArrayRandomizerStrategy(MethodDefinition methodDefinition)
+        public DynamicArrayRandomizerStrategy(MethodDefinition methodDefinition, int arrayCounter)
         {
             _randomizedArrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
             _type = methodDefinition.ReturnType.GetElementType();
+            _arrayCounter = arrayCounter;
         }
 
         public void Reset(MethodDefinition mutatedMethodDef, MethodDefinition methodClone)
