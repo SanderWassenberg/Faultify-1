@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -41,7 +41,7 @@ namespace Faultify.TestRunner.TestRun
 
             return new List<TestRunResult>
             {
-                new()
+                new TestRunResult
                 {
                     TestResults = testResults,
                     Mutations = _mutationVariants

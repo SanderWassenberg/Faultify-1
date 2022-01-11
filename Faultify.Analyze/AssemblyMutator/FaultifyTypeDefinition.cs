@@ -24,7 +24,8 @@ namespace Faultify.Analyze.AssemblyMutator
             HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> fieldAnalyzers,
             HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>> variableMutationAnalyzers,
             HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> arrayMutationAnalyzers,
-            HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> listMutationAnalyzers
+            HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> listMutationAnalyzers,
+            HashSet<IMutationAnalyzer<LinqMutation, MethodDefinition>> linqMutationAnalyzers
         )
         {
             _constantAnalyzers = fieldAnalyzers;
@@ -33,7 +34,7 @@ namespace Faultify.Analyze.AssemblyMutator
             Fields = TypeDefinition.Fields.Select(x => new FaultifyFieldDefinition(x, fieldAnalyzers)).ToList();
             Methods = TypeDefinition.Methods.Select(x =>
                     new FaultifyMethodDefinition(x, fieldAnalyzers, opcodeAnalyzers, variableMutationAnalyzers,
-                        arrayMutationAnalyzers, listMutationAnalyzers))
+                        arrayMutationAnalyzers, listMutationAnalyzers, linqMutationAnalyzers))
                 .ToList();
         }
 
