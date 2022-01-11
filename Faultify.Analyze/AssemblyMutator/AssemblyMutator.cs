@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,6 +20,7 @@ namespace Faultify.Analyze.AssemblyMutator
     ///     - ConstantAnalyzers(<see cref="VariableMutationAnalyzer" />)<br />
     ///     - VariableMutationAnalyzer(<see cref="ConstantMutationAnalyzer" />)<br />
     ///     - OpCodeMutationAnalyzer(<see cref="OpCodeMutationAnalyzer" />)<br />
+    ///     - LinqMutationAnalyzer(<see cref="LinqMutationAnalyzer"/>)<br />
     ///     <br /><br />
     ///     If you add your analyzer to one of those collections then it will be used in the process of analyzing.
     ///     Unfortunately, if your analyzer does not fit the interfaces, it can not be used with the `AssemblyMutator`.
@@ -30,7 +31,7 @@ namespace Faultify.Analyze.AssemblyMutator
         ///     Analyzers that search for possible array mutations inside a method definition.
         /// </summary>
         public HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> ArrayMutationAnalyzers =
-            new()
+            new HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>>()
             {
                 new ArrayMutationAnalyzer()
             };
@@ -48,7 +49,7 @@ namespace Faultify.Analyze.AssemblyMutator
         ///     Analyzers that search for possible constant mutations.
         /// </summary>
         public HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> FieldAnalyzers =
-            new()
+            new HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>>()
             {
                 new BooleanConstantMutationAnalyzer(),
                 new NumberConstantMutationAnalyzer(),
@@ -70,9 +71,15 @@ namespace Faultify.Analyze.AssemblyMutator
         ///     Analyzers that search for possible variable mutations.
         /// </summary>
         public HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>> VariableMutationAnalyzers =
-            new()
+            new HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>>()
             {
                 new VariableMutationAnalyzer()
+            };
+
+        public HashSet<IMutationAnalyzer<LinqMutation, MethodDefinition>> LinqMutationAnalyzers =
+            new HashSet<IMutationAnalyzer<LinqMutation, MethodDefinition>>()
+            {
+                new LinqMutationAnalyzer()
             };
 
         public AssemblyMutator(Stream stream)
@@ -122,7 +129,7 @@ namespace Faultify.Analyze.AssemblyMutator
             return Module.Types
                 .Where(type => !type.FullName.StartsWith("<"))
                 .Select(type => new FaultifyTypeDefinition(type, OpCodeMethodAnalyzers, FieldAnalyzers,
-                    VariableMutationAnalyzers, ArrayMutationAnalyzers, ListMutationAnalyzers))
+                    VariableMutationAnalyzers, ArrayMutationAnalyzers, ListMutationAnalyzers, LinqMutationAnalyzers))
                 .ToList();
         }
 
