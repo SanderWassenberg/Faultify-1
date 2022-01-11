@@ -19,6 +19,7 @@ namespace Faultify.Analyze.AssemblyMutator
     public class FaultifyMethodDefinition : IMutationProvider, IFaultifyMemberDefinition
     {
         private readonly HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> _arrayMutationAnalyzers;
+        private readonly HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> _listMutationAnalyzers;
 
         private readonly HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>>
             _constantReferenceMutationAnalyers;
@@ -37,13 +38,15 @@ namespace Faultify.Analyze.AssemblyMutator
             HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> constantReferenceMutationAnalyers,
             HashSet<IMutationAnalyzer<OpCodeMutation, MethodDefinition>> opcodeMethodAnalyzers,
             HashSet<IMutationAnalyzer<VariableMutation, MethodDefinition>> variableMutationAnalyzers,
-            HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> arrayMutationAnalyzers)
+            HashSet<IMutationAnalyzer<ArrayMutation, MethodDefinition>> arrayMutationAnalyzers,
+            HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> listMutationAnalyzers)
         {
             MethodDefinition = methodDefinition;
             _constantReferenceMutationAnalyers = constantReferenceMutationAnalyers;
             _opcodeMethodAnalyzers = opcodeMethodAnalyzers;
             _variableMutationAnalyzers = variableMutationAnalyzers;
             _arrayMutationAnalyzers = arrayMutationAnalyzers;
+            _listMutationAnalyzers = listMutationAnalyzers;
         }
 
         public int IntHandle => MethodDefinition.MetadataToken.ToInt32();
@@ -67,11 +70,11 @@ namespace Faultify.Analyze.AssemblyMutator
 
             MethodDefinition.Body.SimplifyMacros();
 
-            IEnumerable<IMutationGrouping<IMutation>> opcodeMutations = OpCodeMutations(mutationLevel);
-            IEnumerable<IMutationGrouping<IMutation>> variableMutations = VariableMutations(mutationLevel);
-            IEnumerable<IMutationGrouping<IMutation>> arrayMutations = ArrayMutations(mutationLevel);
-
-            return opcodeMutations.Concat(variableMutations).Concat(arrayMutations);
+            return ((IEnumerable<IMutationGrouping<IMutation>>) OpCodeMutations(mutationLevel))
+                .Concat(VariableMutations(mutationLevel))
+                .Concat(ArrayMutations(mutationLevel))
+                .Concat(ArrayMutations(mutationLevel))
+                .Concat(ListMutations(mutationLevel));
         }
 
         /// <summary>
@@ -112,6 +115,15 @@ namespace Faultify.Analyze.AssemblyMutator
                     yield return mutations;
                 }
             }
+        }
+
+        /// <summary>
+        ///     Returns all possible list mutations from the method its instructions.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<IMutationGrouping<ListMutation>> ListMutations(MutationLevel mutationLevel)
+        {
+            return _listMutationAnalyzers.Select(analyzer => analyzer.AnalyzeMutations(MethodDefinition, mutationLevel));
         }
 
         /// <summary>

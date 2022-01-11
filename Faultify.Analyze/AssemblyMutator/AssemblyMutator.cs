@@ -36,6 +36,15 @@ namespace Faultify.Analyze.AssemblyMutator
             };
 
         /// <summary>
+        ///     Analyzers that search for possible list mutations inside a method definition.
+        /// </summary>
+        public HashSet<IMutationAnalyzer<ListMutation, MethodDefinition>> ListMutationAnalyzers =
+            new()
+            {
+                new ListMutationAnalyzer()
+            };
+
+        /// <summary>
         ///     Analyzers that search for possible constant mutations.
         /// </summary>
         public HashSet<IMutationAnalyzer<ConstantMutation, FieldDefinition>> FieldAnalyzers =
@@ -113,7 +122,7 @@ namespace Faultify.Analyze.AssemblyMutator
             return Module.Types
                 .Where(type => !type.FullName.StartsWith("<"))
                 .Select(type => new FaultifyTypeDefinition(type, OpCodeMethodAnalyzers, FieldAnalyzers,
-                    VariableMutationAnalyzers, ArrayMutationAnalyzers))
+                    VariableMutationAnalyzers, ArrayMutationAnalyzers, ListMutationAnalyzers))
                 .ToList();
         }
 

@@ -13,7 +13,7 @@ namespace Faultify.Analyze.Analyzers
     public interface IMutationAnalyzer<TMutation, in TScope> where TMutation : IMutation
     {
         /// <summary>
-        ///     Name of the mutator.
+        ///     Description of the mutator.
         /// </summary>
         string Description { get; }
 

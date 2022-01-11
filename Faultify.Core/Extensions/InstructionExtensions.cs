@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -32,6 +33,20 @@ namespace Faultify.Core.Extensions
             try
             {
                 return instruction.OpCode == OpCodes.Newarr;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool IsListInitialiser(this Instruction instruction)
+        {
+            try
+            {
+                return instruction.OpCode.Code == Code.Newobj 
+                    && ((MethodReference)instruction.Operand).DeclaringType.GetElementType().FullName == typeof(List<>).FullName 
+                    && instruction.Next.OpCode.Code == Code.Dup;
             }
             catch
             {
