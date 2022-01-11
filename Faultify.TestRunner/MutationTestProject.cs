@@ -338,7 +338,7 @@ namespace Faultify.TestRunner
                 }
                 finally
                 {
-                    lock (this) // WHY WOULD YOU DO THAT https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/lock-statement#guidelines
+                    lock (this) // Probably shouldn't do that, locking 'this' can be dangerous. If within this block, you call a method that ALSO locks 'this', the current thread becomes deadlocked. Here's some guidelines: https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/lock-statement#guidelines
                     {
                         completedRuns += 1;
                         sessionProgressTracker.LogTestRunUpdate(completedRuns, totalRunsCount, failedRuns);
@@ -348,10 +348,11 @@ namespace Faultify.TestRunner
                 }
             }
 
-            // maps testRuns to their results
-            var tasks = from testRun in mutationTestRuns select RunTestRun(testRun);
-
+            // Starts each testrun asynchronously and put all tasks into a list. Then wait until all tasks are done.
+            // The RunTestRun method also adds the results of each test to the report.
+            var tasks = mutationTestRuns.Select(testRun => RunTestRun(testRun));
             Task.WaitAll(tasks.ToArray());
+
             allRunsStopwatch.Stop();
 
             var report = reportBuilder.Build(allRunsStopwatch.Elapsed, totalRunsCount);
