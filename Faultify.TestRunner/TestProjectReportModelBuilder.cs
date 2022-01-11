@@ -115,14 +115,17 @@ namespace Faultify.TestRunner
                 {
                     stringBuilder.Append("{");
                 }
+                stringBuilder.Append("\r\n//...");
 
                 stringBuilder.Append(method.Substring(lastIndex, (index - lastIndex)));
+                stringBuilder.Append("\r\n//...");
                 stringBuilder.Append("\r\n}");
             }
             // only the right side is too long
             else if (index != -1)
             {
                 stringBuilder.Append(method.Substring(0, index));
+                stringBuilder.Append("\r\n//...");
                 stringBuilder.Append("\r\n}");
             }
             // only the left side is too long
@@ -130,6 +133,7 @@ namespace Faultify.TestRunner
             {
                 int temp = method.IndexOf("{");
                 stringBuilder.Append(method.Substring(0, temp + 1));
+                stringBuilder.Append("\r\n//...");
                 stringBuilder.Append(method.Substring(lastIndex, method.Length - lastIndex));
             } 
 
