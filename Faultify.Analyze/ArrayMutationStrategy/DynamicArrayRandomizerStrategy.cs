@@ -106,12 +106,17 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 int dataCounter = 0;
                 while (currentInstruction != null)
                 {
-                    // when you reach an Stloc, all values have been set
-                    if (currentInstruction.OpCode == OpCodes.Stloc) break;
-
-                    // the first Ldc_i4 instruction sets the index, the following commands sets the value
-                    if (currentInstruction.OpCode == OpCodes.Ldc_I4 && dataCounter != length)
+                    // All variables have been found
+                    if (dataCounter == length)
                     {
+                        break;
+                    }
+
+                    // check if the ldc is not for a new array
+                    if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Previous.Operand == _instruction.Next.Operand && currentInstruction.Next.OpCode != OpCodes.Newarr)
+                    {
+                        beforeArray.Remove(currentInstruction.Previous);
+
                         if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
                         {
                             string ldloc = currentInstruction.Next.Operand.ToString();
@@ -121,11 +126,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
                             dataCounter++;
+                            currentInstruction = currentInstruction.Next.Next.Next;
                         }
+                    }
+                    else
+                    {
+                        beforeArray.Add(currentInstruction);
                         currentInstruction = currentInstruction.Next;
                     }
-
-                    currentInstruction = currentInstruction.Next;
                 }
             }
 
@@ -143,7 +151,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
-            var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data);
+            var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data, _instruction.Next.Operand);
 
             // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);

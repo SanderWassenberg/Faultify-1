@@ -88,13 +88,13 @@ namespace Faultify.TestRunner
             int index = lineNumber;
             int lastIndex = lineNumber;
 
-            while (counter < 5 && (index = method.IndexOf("\r\n\t", index + 1)) != -1)
+            while (counter < 15 && (index = method.IndexOf("\r\n\t", index + 1)) != -1)
             {
                 counter++;
             }
 
             counter = 0;
-            while (counter < 5 && (lastIndex = method.LastIndexOf("\r\n\t", lastIndex - 1)) != -1)
+            while (counter < 15 && (lastIndex = method.LastIndexOf("\r\n\t", lastIndex - 1)) != -1)
             {
                 counter++;
             }

@@ -20,7 +20,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         /// <param name="length"></param>
         /// <param name="arrayType"></param>
         /// <returns></returns>
-        public List<Instruction> CreateRandomizedArray(ILProcessor processor, int length, TypeReference arrayType, object[] data)
+        public List<Instruction> CreateRandomizedArray(ILProcessor processor, int length, TypeReference arrayType, object[] data, object operand)
         {
             _randomValueGenerator = new RandomValueGenerator();
             var opcodeTypeValueAssignment = arrayType.GetLdcOpCodeByTypeReference();
@@ -52,6 +52,8 @@ namespace Faultify.Analyze.ArrayMutationStrategy
 
                 list.Add(processor.Create(stelem));
             }
+
+            list.Add(processor.Create(OpCodes.Stloc, operand));
 
             return list;
         }
