@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Faultify.TestRunner.Logging;
 using Faultify.TestRunner.Shared;
+using Faultify.TestRunner.TestRun;
 
 namespace Faultify.TestRunner
 {
@@ -22,7 +23,7 @@ namespace Faultify.TestRunner
         /// <param name="tests"></param>
         /// <returns></returns>
         Task<TestResults> RunTests(TimeSpan timeout, IProgress<string> progress,
-            IEnumerable<string> tests);
+            IEnumerable<string> tests, IList<MutationVariant> mutationVariants);
 
         /// <summary>
         ///     Run the code coverage process.
