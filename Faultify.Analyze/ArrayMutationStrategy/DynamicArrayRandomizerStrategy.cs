@@ -125,9 +125,9 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         else
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
-                            dataCounter++;
                             currentInstruction = currentInstruction.Next.Next.Next;
                         }
+                        dataCounter++;
                     }
                     else
                     {
@@ -151,7 +151,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
-            var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data, _instruction.Next.Operand);
+            var newArray = _randomizedArrayBuilder.CreateRandomizedArray(processor, length, _type, data, _instruction.Next);
 
             // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);

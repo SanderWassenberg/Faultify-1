@@ -42,6 +42,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             var processor = _methodDefinition.Body.GetILProcessor();
             _methodDefinition.Body.SimplifyMacros();
 
+            var length = 0;
             var beforeArray = new List<Instruction>();
             var afterArray = new List<Instruction>();
 
@@ -63,6 +64,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 } 
                 else if (currentInstruction.Equals(_instruction))
                 {
+                    length = (int)currentInstruction.Previous.Operand;
                     beforeArray.Remove(currentInstruction.Previous);
                     isnewarr = true;
                     _lineNumber = AnalyzeUtils.FindLineNumber(currentInstruction, _methodDefinition);
@@ -87,10 +89,39 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // if the array is created by adding each item by index, go over all these instructions
             else
             {
+                int dataCounter = 0;
                 // when you reach an Stloc, all values have been visited
-                while (currentInstruction != null && currentInstruction.OpCode != OpCodes.Stloc)
+                while (currentInstruction != null)
                 {
-                    currentInstruction = currentInstruction.Next;
+                    // All variables have been found
+                    if (dataCounter == length)
+                    {
+                        break;
+                    }
+
+                    // check if the ldc is not for a new array
+                    if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Previous.Operand == _instruction.Next.Operand && currentInstruction.Next.OpCode != OpCodes.Newarr)
+                    {
+                        if (currentInstruction.Previous.OpCode != OpCodes.Dup)
+                        {
+                            beforeArray.Remove(currentInstruction.Previous);
+                        }
+
+                        if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
+                        {
+                            
+                        }
+                        else
+                        {
+                            currentInstruction = currentInstruction.Next.Next.Next;
+                        }
+                        dataCounter++;
+                    }
+                    else
+                    {
+                        beforeArray.Add(currentInstruction);
+                        currentInstruction = currentInstruction.Next;
+                    }
                 }
             }
 
@@ -109,7 +140,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
-            var newArray = _arrayBuilder.CreateEmptyArray(processor, _type);
+            var newArray = _arrayBuilder.CreateEmptyArray(processor, _type, _instruction.Next);
 
             // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
