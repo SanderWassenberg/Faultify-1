@@ -20,14 +20,14 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
         private int _lineNumber;
-        private int _arrayCounter;
+        private Instruction _instruction;
 
-        public EmptyArrayStrategy(MethodDefinition methodDefinition, int arrayCounter)
+        public EmptyArrayStrategy(MethodDefinition methodDefinition, Instruction instruction)
         {
             _arrayBuilder = new RandomizedArrayBuilder();
             _methodDefinition = methodDefinition;
             _type = methodDefinition.ReturnType.GetElementType();
-            _arrayCounter = arrayCounter;
+            _instruction = instruction;
         }
 
         public void Reset(MethodDefinition methodBody, MethodDefinition methodClone)
@@ -50,7 +50,6 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             // Get the type of the array from the instructions
             // After the 'Dup' instruction the setup ends and the actual values start
             bool isnewarr = false;
-            int arrayCounter = 1;
             while (currentInstruction != null)
             {
                 if ((currentInstruction.OpCode == OpCodes.Dup || currentInstruction.OpCode == OpCodes.Stloc) && isnewarr)
@@ -62,7 +61,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 {
                     beforeArray.Add(currentInstruction);
                 } 
-                else if (arrayCounter == _arrayCounter)
+                else if (currentInstruction.Equals(_instruction))
                 {
                     beforeArray.Remove(currentInstruction.Previous);
                     isnewarr = true;
@@ -71,7 +70,6 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 else
                 {
                     beforeArray.Add(currentInstruction);
-                    arrayCounter++;
                 }
 
                 currentInstruction = currentInstruction.Next;
