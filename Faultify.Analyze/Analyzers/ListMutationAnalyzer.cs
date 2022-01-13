@@ -23,7 +23,7 @@ namespace Faultify.Analyze.Analyzers
                 if (instruction.IsListInitialiser())
                 {
                     //Add all possible or desired strategies to the mutation list
-                    mutations.Add(new ListMutation(new EmptyListStrategy(method), method));
+                    mutations.Add(new ListMutation(new EmptyListStrategy(method, instruction), method));
                 }
             }
 

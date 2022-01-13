@@ -11,10 +11,12 @@ namespace Faultify.Analyze.Strategies
         private readonly MethodDefinition _methodDefinition;
         private TypeReference _type;
         private int _lineNumber;
+        private Instruction _instruction;
 
-        public EmptyListStrategy(MethodDefinition methodDefinition)
+        public EmptyListStrategy(MethodDefinition methodDefinition, Instruction instruction)
         {
             _methodDefinition = methodDefinition;
+            _instruction = instruction;
             _type = methodDefinition.ReturnType.GetElementType();
         }
 
@@ -30,11 +32,12 @@ namespace Faultify.Analyze.Strategies
             // Check each instruction, then immediately increase the index.
             // This way, when exiting the loop, the index lands right after
             // the instruction which creates the list.
-            int index = 0;
-            while (index < instructions.Count
-                && !instructions[index++].IsListInitialiser()) ;
+            int index = _methodDefinition.Body.Instructions.IndexOf(_instruction);
 
             _lineNumber = AnalyzeUtils.FindLineNumber(instructions[index], _methodDefinition);
+
+            while (index < instructions.Count
+                && !instructions[index++].IsListInitialiser()) ;
 
             // Assume we're on the instruction following the newobj that makes the list.
             // There is one list reference on the stack (stackSize = 1). It will stay there for as long as the list
