@@ -54,7 +54,9 @@ namespace Faultify.TestRunner.ProjectDuplication
 
                 if (freeProject != null)
                     return freeProject;
-                return AcquireTestProject();
+
+                return AcquireTestProject(); // Why is this here? Running this line WILL cause the current thread to become deadlocked. The mutex is already locked, entering this method again recursively will mean it never gets past the lock.
+                // https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/lock-statement#guidelines
             }
         }
 
