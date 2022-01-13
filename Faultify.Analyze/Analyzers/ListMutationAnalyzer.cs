@@ -18,12 +18,14 @@ namespace Faultify.Analyze.Analyzers
         public IMutationGrouping<ListMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel, IDictionary<Instruction, SequencePoint> debug = null)
         {
             List<ListMutation> mutations = new List<ListMutation>();
-            foreach (var instruction in method.Body.Instructions)
+            for (int i = 0; i < method.Body.Instructions.Count; i++)
             {
+                var instruction = method.Body.Instructions[i];
+
                 if (instruction.IsListInitialiser())
                 {
                     //Add all possible or desired strategies to the mutation list
-                    mutations.Add(new ListMutation(new EmptyListStrategy(method), method));
+                    mutations.Add(new ListMutation(new EmptyListStrategy(method, i), method));
                 }
             }
 
