@@ -42,14 +42,16 @@ namespace Faultify.Analyze.Analyzers
         public IMutationGrouping<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
+            // Stores all found mutations
             List<ArrayMutation> mutations = new List<ArrayMutation>();
+
             foreach (var instruction in method.Body.Instructions)
                 // Call the corresponding strategy based on the result
                 if (instruction.IsDynamicArray() && SupportedTypeCheck(instruction))
                 {
                     //Add all possible or desired strategies to the mutation list
-                    mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method), method));
-                    mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method), method));
+                    mutations.Add(new ArrayMutation(new EmptyArrayStrategy(method, instruction), method));
+                    mutations.Add(new ArrayMutation(new DynamicArrayRandomizerStrategy(method, instruction), method));
                 }
 
             // Build Mutation Group

@@ -7,6 +7,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
     /// </summary>
     public interface IArrayMutationStrategy
     {
+
         /// <summary>
         ///     Mutates the array according to the implemented strategy.
         /// </summary>
