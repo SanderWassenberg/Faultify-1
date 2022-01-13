@@ -47,11 +47,12 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             var afterArray = new List<Instruction>();
             Dictionary<string, int> localVariables = new Dictionary<string, int>();
 
+            // Get first instruction
             var currentInstruction = _methodDefinition.Body.Instructions[0];
 
-            // Get the length of the array from the instructions
-            // After the 'Dup' instruction the setup ends and the actual values start
             bool isnewarr = false;
+            // Get the length of the array from the instructions
+            // Find the instruction for creating a new array, after that the actual values start
             while (currentInstruction != null)
             {
                 if (_type.ToSystemType() == typeof(bool) && currentInstruction.OpCode == OpCodes.Stloc && currentInstruction.Previous.OpCode == OpCodes.Ldc_I4)
@@ -112,22 +113,25 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         break;
                     }
 
-                    // check if the ldc is not for a new array
+                    // check if the ldc is not for a new array and check if the ldc is for the array that needs to be mutated
                     if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Previous.Operand == _instruction.Next.Operand && currentInstruction.Next.OpCode != OpCodes.Newarr)
                     {
                         beforeArray.Remove(currentInstruction.Previous);
 
+                        // For booleans
                         if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
                         {
                             string ldloc = currentInstruction.Next.Operand.ToString();
                             data[(int)currentInstruction.Operand] = localVariables[ldloc];
                             currentInstruction = currentInstruction.Next.Next.Next;
                         }
-                        else if(currentInstruction.Next.OpCode == OpCodes.Ldarg)
+                        // For variables outside of the method
+                        else if (currentInstruction.Next.OpCode == OpCodes.Ldarg)
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
                             currentInstruction = currentInstruction.Next.Next.Next.Next;
-                        } 
+                        }
+                        // for values inside of the method
                         else
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
@@ -135,6 +139,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         }
                         dataCounter++;
                     }
+                    // Not an instruction for the array that needs to be mutated
                     else
                     {
                         beforeArray.Add(currentInstruction);
