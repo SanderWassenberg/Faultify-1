@@ -43,6 +43,6 @@ namespace Faultify.Analyze.Mutation
             Instruction.Operand = OriginalMethod;
         }
 
-        public string Report => $"{MethodScope.FullName.Split(' ').Last()} :Change LINQ method from '{OriginalMethod.Name}' to '{ReplacementMethodInfo.Name}' at line {LineNumber}";
+        public string Report => $"{MethodScope.FullName.Split(' ').Last()}: Change LINQ method from '{OriginalMethod.Name}' to '{ReplacementMethodInfo.Name}' at line {LineNumber}";
     }
 }

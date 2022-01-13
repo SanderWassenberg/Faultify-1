@@ -42,6 +42,7 @@ namespace Faultify.Analyze.Analyzers
         public IMutationGrouping<ArrayMutation> AnalyzeMutations(MethodDefinition method, MutationLevel mutationLevel,
             IDictionary<Instruction, SequencePoint> debug = null)
         {
+            // Stores all found mutations
             List<ArrayMutation> mutations = new List<ArrayMutation>();
 
             foreach (var instruction in method.Body.Instructions)
