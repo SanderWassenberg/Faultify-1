@@ -107,7 +107,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 while (currentInstruction != null)
                 {
                     // All variables have been found
-                    if (dataCounter == length)
+                    if (dataCounter == length || (currentInstruction.OpCode == OpCodes.Stloc && _instruction.Next.OpCode == OpCodes.Dup))
                     {
                         break;
                     }
@@ -121,7 +121,13 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                         {
                             string ldloc = currentInstruction.Next.Operand.ToString();
                             data[(int)currentInstruction.Operand] = localVariables[ldloc];
+                            currentInstruction = currentInstruction.Next.Next.Next;
                         }
+                        else if(currentInstruction.Next.OpCode == OpCodes.Ldarg)
+                        {
+                            data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;
+                            currentInstruction = currentInstruction.Next.Next.Next.Next;
+                        } 
                         else
                         {
                             data[(int)currentInstruction.Operand] = currentInstruction.Next.Operand;

@@ -94,7 +94,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                 while (currentInstruction != null)
                 {
                     // All variables have been found
-                    if (dataCounter == length)
+                    if (dataCounter == length || (currentInstruction.OpCode == OpCodes.Stloc && _instruction.Next.OpCode == OpCodes.Dup ))
                     {
                         break;
                     }
@@ -102,15 +102,16 @@ namespace Faultify.Analyze.ArrayMutationStrategy
                     // check if the ldc is not for a new array
                     if (currentInstruction.OpCode == OpCodes.Ldc_I4 && currentInstruction.Previous.Operand == _instruction.Next.Operand && currentInstruction.Next.OpCode != OpCodes.Newarr)
                     {
-                        if (currentInstruction.Previous.OpCode != OpCodes.Dup)
-                        {
-                            beforeArray.Remove(currentInstruction.Previous);
-                        }
+                        beforeArray.Remove(currentInstruction.Previous);
 
                         if (currentInstruction.Next.OpCode == OpCodes.Ldloc && _type.ToSystemType() == typeof(bool))
                         {
-                            
+                            currentInstruction = currentInstruction.Next.Next.Next;
                         }
+                        else if (currentInstruction.Next.OpCode == OpCodes.Ldarg)
+                        {
+                            currentInstruction = currentInstruction.Next.Next.Next.Next;
+                        } 
                         else
                         {
                             currentInstruction = currentInstruction.Next.Next.Next;
