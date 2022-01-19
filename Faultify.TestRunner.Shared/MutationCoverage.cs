@@ -26,8 +26,6 @@ namespace Faultify.TestRunner.Shared
         }
     }
 
-    // TODO: Uses custom format because Json requires external package.
-    // External packages are somehow not working with test data collectors.
     public class MutationCoverage
     {
         /// <summary>

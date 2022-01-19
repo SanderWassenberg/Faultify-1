@@ -4,7 +4,7 @@
 		<PackageId>faultify</PackageId>
 		<Description>Fualtify Dotnet Mutation Test Commandline Utility</Description>
 
-		<Authors>Timon</Authors>
+		<Authors>RDW</Authors>
 		<ProjectUrl>https://github.com/Faultify/Faultify</ProjectUrl>
 		<PackageTags>Test;Mutation;Mutation Testing;Testing</PackageTags>
 		<RepositoryUrl>https://github.com/Faultify/Faultify.git</RepositoryUrl>
