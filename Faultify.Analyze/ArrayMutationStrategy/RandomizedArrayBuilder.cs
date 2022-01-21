@@ -64,13 +64,12 @@ namespace Faultify.Analyze.ArrayMutationStrategy
         /// <param name="processor"></param>
         /// <param name="arrayType"></param>
         /// <returns></returns>
-        public List<Instruction> CreateEmptyArray(ILProcessor processor, TypeReference arrayType, Instruction instruction)
+        public List<Instruction> CreateEmptyArray(ILProcessor processor, TypeReference arrayType)
         {
             var list = new List<Instruction>
             {
                 processor.Create(OpCodes.Ldc_I4, 0),
-                processor.Create(OpCodes.Newarr, arrayType),
-                processor.Create(instruction.OpCode, instruction.Operand)
+                processor.Create(OpCodes.Newarr, arrayType)
             };
 
             return list;

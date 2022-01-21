@@ -144,7 +144,7 @@ namespace Faultify.Analyze.ArrayMutationStrategy
             foreach (var before in beforeArray) processor.Append(before);
 
             // get the instructions to create the array with all its values
-            var newArray = _arrayBuilder.CreateEmptyArray(processor, _type, _instruction.Next);
+            var newArray = _arrayBuilder.CreateEmptyArray(processor, _type);
 
             // append new array instructions to processor
             foreach (var newInstruction in newArray) processor.Append(newInstruction);
