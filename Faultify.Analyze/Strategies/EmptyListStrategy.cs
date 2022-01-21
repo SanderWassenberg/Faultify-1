@@ -41,7 +41,7 @@ namespace Faultify.Analyze.Strategies
                 var currentInstruction = instructions[index];
 
                 /*
-                 TODO: This code is buggy and cannot handle initializers with branching such as:
+                 TODO: This code isn't 100% waterproof and cannot handle initializers with branching such as:
                     new List<int>{ (cond ? a : b), c, d, e }
                  A possible solution is show below.
                 If this solution is applies then it's probably best to remove the instructions AFTER finding the end instead of whilst looking for it. 
